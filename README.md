@@ -19,7 +19,7 @@ const b = ({ arg }: { arg: boolean }) => arg
 const ab = all({ a, b })
 ```
 
-The factory creates a function that retains type safety on arguments and return values for the functions it executes:
+The resulting function retains type safety on arguments and return values for the functions it executes:
 
 ```typescript
 const out = await ab({
