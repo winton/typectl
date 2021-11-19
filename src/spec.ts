@@ -21,7 +21,7 @@ describe("typectl", () => {
     const ab = all({ a, b })
 
     const out = await ab({
-      a: { arg: 1 }, // arg type safety ✅
+      a: { arg: 1 }, // argument type safety ✅
       b: { arg: true },
     })
 

@@ -8,7 +8,7 @@ npm install typectl
 
 ## All
 
-The `all` function is a factory for executing functions in parallel, retaining type safety on arguments and return values.
+The `all` function is a factory that creates a function that executes a group of functions in parallel:
 
 ```typescript
 import { all } from "typectl"
@@ -17,9 +17,13 @@ const a = ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
 const ab = all({ a, b })
+```
 
+The factory creates a function that retains type safety on arguments and return values for the functions it executes:
+
+```typescript
 const out = await ab({
-  a: { arg: 1 }, // arg type safety ✅
+  a: { arg: 1 }, // argument type safety ✅
   b: { arg: true },
 })
 
@@ -29,7 +33,16 @@ expect(out.b).toBe(true)
 
 ## Each
 
-The `each` function has the same signature as `all`, but runs functions sequentially.
+The `each` function has the same signature as `all`, but the factory builds functions that runs function groups sequentially:
+
+```typescript
+import { each } from "typectl"
+
+const a = ({ arg }: { arg: number }) => arg
+const b = ({ arg }: { arg: boolean }) => arg
+
+const ab = each({ a, b })
+```
 
 ## Props
 
@@ -47,7 +60,7 @@ expect(arg.value).toBe(2)
 expect(await arg.promise).toBe(2)
 ```
 
-Use props to wait on a variable to populate within your control flows:
+Use props to wait on variables to populate within your control flows:
 
 ```typescript
 import { all, prop, Prop } from "./typectl"
