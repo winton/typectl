@@ -40,22 +40,34 @@ export function each<Obj extends RecordType>(obj: Obj) {
   }
 }
 
-export type PropType<T> = {
-  get: () => T
-  toJSON: () => T
-  set: (value: T) => T
+export class Prop<T> {
+  _promise: Promise<T>
+  _resolve: (value: T | PromiseLike<T>) => void
+  _state: T
+  constructor(value?: T) {
+    this._promise =
+      value !== undefined
+        ? Promise.resolve(value)
+        : new Promise<T>(
+            (resolve) => (this._resolve = resolve)
+          )
+    this._state = value
+  }
+  get promise() {
+    return this._promise
+  }
+  get value() {
+    return this._state
+  }
+  set value(value: T) {
+    this._state = value
+    this._resolve(value)
+  }
+  toJSON() {
+    return this._state
+  }
 }
 
-export function prop<T>(store?: T): PropType<T> {
-  return {
-    get: function () {
-      return store
-    },
-    toJSON: function () {
-      return store
-    },
-    set: function (value: T) {
-      return (store = value)
-    },
-  }
+export function prop<T>(value?: T): Prop<T> {
+  return new Prop(value)
 }
