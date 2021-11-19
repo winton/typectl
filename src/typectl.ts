@@ -61,7 +61,11 @@ export class Prop<T> {
   }
   set value(value: T) {
     this._state = value
-    this._resolve(value)
+    if (this._resolve) {
+      this._resolve(value)
+    } else {
+      this._promise = Promise.resolve(value)
+    }
   }
   toJSON() {
     return this._state

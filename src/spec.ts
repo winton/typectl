@@ -29,7 +29,17 @@ describe("typectl", () => {
     expect(out.b).toBe(true)
   })
 
-  it("readme prop example", async () => {
+  it("readme prop example 1", async () => {
+    const arg = prop(1)
+    expect(arg.value).toBe(1)
+    expect(await arg.promise).toBe(1)
+
+    arg.value = 2
+    expect(arg.value).toBe(2)
+    expect(await arg.promise).toBe(2)
+  })
+
+  it("readme prop example 2", async () => {
     const a = ({ arg }: { arg: Prop<number> }) => arg.value
     const b = async ({ arg }: { arg: Prop<number> }) =>
       await arg.promise

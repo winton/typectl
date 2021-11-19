@@ -33,7 +33,21 @@ The `each` function has the same signature as `all`, but runs functions sequenti
 
 ## Props
 
-Props are getter-setter factories that allow functions in your control flows to wait on a variable to populate.
+Props are getter-setter factories:
+
+```typescript
+import { prop } from "./typectl"
+
+const arg = prop(1)
+expect(arg.value).toBe(1)
+expect(await arg.promise).toBe(1)
+
+arg.value = 2
+expect(arg.value).toBe(2)
+expect(await arg.promise).toBe(2)
+```
+
+Use props to wait on a variable to populate within your control flows:
 
 ```typescript
 import { all, prop, Prop } from "./typectl"
