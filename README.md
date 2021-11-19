@@ -46,7 +46,7 @@ const ab = each({ a, b })
 
 ## Any
 
-The `any` function has the same signature as `all`, but function arguments are optional. If an argument is undefined, the respective function is not executed.
+The `any` function has the same signature as `all`, but function group arguments are optional. If an argument is undefined, the respective function is not executed.
 
 ```typescript
 import { any } from "typectl"
