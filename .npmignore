@@ -1,0 +1,8 @@
+/.husky
+/.eslintrc.json
+/.prettierrc
+/.mocharc.json
+/.vscode
+/bin
+/src
+/tsconfig.*

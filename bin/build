@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+printf "TypeScript building...\n"
+
+rm -rf dist
+npx tsc --project tsconfig.json &
+time wait
+
+printf "\n"

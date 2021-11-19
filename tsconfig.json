@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "exclude": ["./dist", "**/node_modules"],
+  "include": ["./src"],
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "./dist/cjs-ts",
+    "target": "es5"
+  }
+}
