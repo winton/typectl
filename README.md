@@ -33,7 +33,7 @@ expect(out.b).toBe(true)
 
 ## Each
 
-The `each` function has the same signature as `all`, but the factory builds functions that runs function groups sequentially:
+The `each` function has the same signature as `all`, but function groups execute sequentially:
 
 ```typescript
 import { each } from "typectl"
@@ -42,6 +42,27 @@ const a = ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
 const ab = each({ a, b })
+```
+
+## Any
+
+The `any` function has the same signature as `all`, but function arguments are optional. If an argument is undefined, the respective function is not executed.
+
+```typescript
+import { any } from "typectl"
+
+const a = ({ arg }: { arg: number }) => arg
+const b = ({ arg }: { arg: boolean }) => arg
+
+const ab = any({ a, b })
+
+const out = await ab({
+  a: { arg: 1 },
+  // b argument undefined
+})
+
+expect(out.a).toBe(1)
+expect(out.b).toBe(undefined)
 ```
 
 ## Nested control flow

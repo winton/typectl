@@ -9,15 +9,36 @@ export function all<Obj extends RecordType>(obj: Obj) {
     input: RecordInType<Obj>
   ): Promise<RecordOutType<Obj>> => {
     const outputs: any = {}
-    const keys = Object.keys(obj)
 
-    for (const key of keys) {
+    for (const key in obj) {
       outputs[key] = obj[key](input[key])
     }
 
     await Promise.all(Object.values(outputs))
 
-    for (const key of keys) {
+    for (const key in outputs) {
+      outputs[key] = await outputs[key]
+    }
+
+    return outputs
+  }
+}
+
+export function any<Obj extends RecordType>(obj: Obj) {
+  return async (
+    input: Partial<RecordInType<Obj>>
+  ): Promise<Partial<RecordOutType<Obj>>> => {
+    const outputs: any = {}
+
+    for (const key in obj) {
+      if (input[key] !== undefined) {
+        outputs[key] = obj[key](input[key])
+      }
+    }
+
+    await Promise.all(Object.values(outputs))
+
+    for (const key in outputs) {
       outputs[key] = await outputs[key]
     }
 

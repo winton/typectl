@@ -1,5 +1,5 @@
 import expect from "expect"
-import { all, each, prop, Prop } from "./typectl"
+import { all, any, each, prop, Prop } from "./typectl"
 
 const numberFn = (input: {
   inputNumber: Prop<number>
@@ -27,6 +27,21 @@ describe("typectl", () => {
 
     expect(out.a).toBe(1) // return type safety ✅
     expect(out.b).toBe(true)
+  })
+
+  it("readme any example", async () => {
+    const a = ({ arg }: { arg: number }) => arg
+    const b = ({ arg }: { arg: boolean }) => arg
+
+    const ab = any({ a, b })
+
+    const out = await ab({
+      a: { arg: 1 },
+      // b argument undefined
+    })
+
+    expect(out.a).toBe(1)
+    expect(out.b).toBe(undefined)
   })
 
   it("readme nested example", async () => {
