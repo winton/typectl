@@ -75,7 +75,7 @@ expect(out.cd).toEqual({
 Props are getter-setter factories:
 
 ```typescript
-import { prop } from "./typectl"
+import { prop } from "typectl"
 
 const arg = prop(1)
 expect(arg.value).toBe(1)
@@ -89,7 +89,7 @@ expect(await arg.promise).toBe(2)
 Use props to wait on variables to populate within your control flows:
 
 ```typescript
-import { all, prop, Prop } from "./typectl"
+import { all, prop, Prop } from "typectl"
 
 const a = ({ arg }: { arg: Prop<number> }) => arg.value
 const b = async ({ arg }: { arg: Prop<number> }) =>
