@@ -1,7 +1,5 @@
 import expect from "expect"
-import all from "./all"
-import each from "./each"
-import prop, { PropType } from "./prop"
+import { all, each, prop, PropType } from "./typectl"
 
 const numberFn = (input: {
   inputNumber: PropType<number>
