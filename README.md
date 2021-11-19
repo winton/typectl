@@ -67,7 +67,7 @@ expect(out.b).toBe(undefined)
 
 ## Nested control flow
 
-Nest `all` and `each` functions to create complex control flows:
+Nest `all`, `each`, or `any` functions to create complex control flows:
 
 ```typescript
 const a = ({ arg }: { arg: number }) => arg
