@@ -8,7 +8,7 @@ npm install typectl
 
 ## All
 
-The `all` function creates a function that allows you to execute functions in parallel, while retaining type safety on the inputs and ouputs.
+The `all` function is a factory for executing functions in parallel, retaining type safety on arguments and return values.
 
 ```typescript
 import { all } from "typectl"
@@ -29,7 +29,7 @@ expect(out.b).toBe(true)
 
 ## Each
 
-The `each` function has the same signature as `all`, but runs the functions sequentially.
+The `each` function has the same signature as `all`, but runs functions sequentially.
 
 ## Props
 
