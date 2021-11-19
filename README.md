@@ -44,6 +44,32 @@ const b = ({ arg }: { arg: boolean }) => arg
 const ab = each({ a, b })
 ```
 
+## Nested control flow
+
+Nest `all` and `each` functions to create complex control flows:
+
+```typescript
+const a = ({ arg }: { arg: number }) => arg
+const b = ({ arg }: { arg: boolean }) => arg
+const c = ({ arg }: { arg: string }) => arg
+const d = ({ arg }: { arg: null }) => arg
+
+const ab = all({ a, b, cd: each({ c, d }) })
+
+const out = await ab({
+  a: { arg: 1 }, // argument type safety ✅
+  b: { arg: true },
+  cd: { c: { arg: "c" }, d: { arg: null } },
+})
+
+expect(out.a).toBe(1) // return type safety ✅
+expect(out.b).toBe(true)
+expect(out.cd).toEqual({
+  c: "c",
+  d: null,
+})
+```
+
 ## Props
 
 Props are getter-setter factories:
