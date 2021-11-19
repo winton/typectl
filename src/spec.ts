@@ -13,8 +13,28 @@ const stringFn = (input: {
   outputString: input.inputString,
 })
 
-describe("all", () => {
-  it("runs", async () => {
+describe("typectl", () => {
+  it("each", async () => {
+    const fn = each({ numberFn, stringFn })
+    const x = await fn({
+      numberFn: { inputNumber: prop(1) },
+      stringFn: { inputString: prop("2") },
+    })
+    expect(x.numberFn.outputNumber.get()).toBe(1)
+    expect(x.stringFn.outputString.get()).toBe("2")
+  })
+
+  it("all", async () => {
+    const fn = all({ numberFn, stringFn })
+    const x = await fn({
+      numberFn: { inputNumber: prop(1) },
+      stringFn: { inputString: prop("2") },
+    })
+    expect(x.numberFn.outputNumber.get()).toBe(1)
+    expect(x.stringFn.outputString.get()).toBe("2")
+  })
+
+  it("all -> each", async () => {
     const inputNumber = prop<number>()
     const inputString = prop("2")
 
