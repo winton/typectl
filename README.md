@@ -70,6 +70,8 @@ expect(out.b).toBe(undefined)
 Nest `all`, `each`, or `any` functions to create complex control flows:
 
 ```typescript
+import { any, each } from "typectl"
+
 const a = ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 const c = ({ arg }: { arg: string }) => arg
