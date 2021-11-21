@@ -2,7 +2,7 @@
   "name": "typectl",
   "version": "0.0.2",
   "description": "TypeScript control flow library",
-  "main": "./dist/cjs-ts/ioType.js",
+  "main": "./dist/cjs-ts/typectl.js",
   "scripts": {
     "build": "./bin/build",
     "prepare": "husky install; npm run build",
