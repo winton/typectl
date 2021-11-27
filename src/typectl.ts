@@ -96,3 +96,43 @@ export class Prop<T> {
 export function prop<T>(value?: T): Prop<T> {
   return new Prop(value)
 }
+
+export type AnyProp = Prop<any>
+
+export function anyProp(value?: any): Prop<any> {
+  return new Prop(value)
+}
+
+export type StringProp = Prop<string>
+
+export function stringProp(value?: string): Prop<string> {
+  return new Prop(value)
+}
+
+export type BooleanProp = Prop<boolean>
+
+export function booleanProp(
+  value?: boolean
+): Prop<boolean> {
+  return new Prop(value)
+}
+
+export type NumberProp = Prop<number>
+
+export function numberProp(value?: number): Prop<number> {
+  return new Prop(value)
+}
+
+export type ArrayProp = Prop<any[]>
+
+export function arrayProp(value?: any[]): Prop<any[]> {
+  return new Prop(value)
+}
+
+export type RecordProp = Prop<Record<string, any>>
+
+export function recordProp(
+  value?: Record<string, any>
+): Prop<Record<string, any>> {
+  return new Prop(value)
+}
