@@ -1,3 +1,4 @@
+import { Readable } from "stream"
 import {
   RecordType,
   RecordOutType,
@@ -134,5 +135,13 @@ export type RecordProp = Prop<Record<string, any>>
 export function recordProp(
   value?: Record<string, any>
 ): Prop<Record<string, any>> {
+  return new Prop(value)
+}
+
+export type StreamProp = Prop<Readable>
+
+export function streamProp(
+  value?: Readable
+): Prop<Readable> {
   return new Prop(value)
 }
