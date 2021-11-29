@@ -97,21 +97,25 @@ expect(out.cd).toEqual({
 
 ## Props
 
-Props are getter-setter factories:
+Props enable control flow functions to wait for inputs to become available while still keeping a simple input type signature.
+
+Props are getter-setter factories that are sync or async:
 
 ```typescript
 import { prop } from "typectl"
 
-const arg = prop(1)
-expect(arg.value).toBe(1)
+const arg = prop<number>()
+
+setTimeout(() => (arg.value = 1), 100)
 expect(await arg.promise).toBe(1)
+expect(arg.value).toBe(1)
 
 arg.value = 2
 expect(arg.value).toBe(2)
 expect(await arg.promise).toBe(2)
 ```
 
-When props are passed as inputs, they reach the control flow as their values:
+When a caller function receives a prop as input, the value of the prop is resolved before it reaches the control flow function:
 
 ```typescript
 import { all, prop } from "typectl"
@@ -126,20 +130,22 @@ const out = await aFlow({
 expect(out.a).toBe(1)
 ```
 
-The flow function does not execute until the prop value is available:
+Control flow functions that receive a prop input do not execute until the prop value is resolvable:
 
 ```typescript
 import { all, prop } from "typectl"
 
+// simple function input signature ✅
 const a = ({ arg }: { arg: number }) => arg
-const aFlow = all({ a })
-const arg = prop<number>()
 
+const aFlow = all({ a })
+
+// async prop ✅
+const arg = prop<number>()
 setTimeout(() => (arg.value = 1), 100)
 
-const out = await aFlow({
-  a: { arg },
-})
+// `a` not called until prop resolves
+const out = await aFlow({ a: { arg } })
 
 expect(out.a).toBe(1)
 ```

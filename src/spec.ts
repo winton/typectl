@@ -88,15 +88,17 @@ describe("typectl", () => {
   })
 
   it("readme prop example 3", async () => {
+    // simple function input signature ✅
     const a = ({ arg }: { arg: number }) => arg
-    const aFlow = all({ a })
-    const arg = prop<number>()
 
+    const aFlow = all({ a })
+
+    // async prop ✅
+    const arg = prop<number>()
     setTimeout(() => (arg.value = 1), 100)
 
-    const out = await aFlow({
-      a: { arg },
-    })
+    // `a` not called until prop resolves
+    const out = await aFlow({ a: { arg } })
 
     expect(out.a).toBe(1)
   })
