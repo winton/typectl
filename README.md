@@ -99,7 +99,7 @@ expect(out.cd).toEqual({
 
 Props enable control flow functions to wait for sync or async inputs **and simulataneously** maintain a simple input type signature.
 
-Props are getter-setter factories that are sync or async:
+Props are awaitable getter-setter factories:
 
 ```typescript
 import { prop } from "typectl"
