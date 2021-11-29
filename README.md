@@ -97,7 +97,7 @@ expect(out.cd).toEqual({
 
 ## Props
 
-Props enable control flow functions to have optional async inputs **and** a simple input type signature.
+Props allow control flow functions to maintain a simple argument signature while enabling the end user to optionally specify async arguments.
 
 Props are awaitable getter-setter factories:
 
@@ -150,7 +150,7 @@ const out = await aFlow({ a: { arg } })
 expect(out.a).toBe(1)
 ```
 
-To bypass the prop value resolution, add `Prop` to the end of the input name:
+To bypass prop value resolution, add `Prop` to the end of the input name:
 
 ```typescript
 const a = ({ argProp }: { argProp: Prop<number> }) =>
