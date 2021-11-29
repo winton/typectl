@@ -8,7 +8,7 @@ npm install typectl
 
 ## All
 
-The `all` function is a factory that creates a function that executes a group of functions in parallel:
+The `all` function builds a "caller" function that executes a group of functions in parallel:
 
 ```typescript
 import { all } from "typectl"
