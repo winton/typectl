@@ -15,7 +15,7 @@ const stringFn = (input: {
 
 describe("typectl", () => {
   it("readme all example", async () => {
-    const a = ({ arg }: { arg: number }) => arg
+    const a = async ({ arg }: { arg: number }) => arg
     const b = ({ arg }: { arg: boolean }) => arg
 
     const abFlow = all({ a, b })
