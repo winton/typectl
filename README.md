@@ -97,7 +97,7 @@ expect(out.cd).toEqual({
 
 ## Props
 
-Props enable control flow functions to wait for sync or async inputs **and simulataneously** maintain a simple input type signature.
+Props enable control flow functions to have optional async inputs **and** a simple input type signature.
 
 Props are awaitable getter-setter factories:
 
