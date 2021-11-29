@@ -107,9 +107,8 @@ export class Prop<T> {
     this._state = value
     if (this._resolve) {
       this._resolve(value)
-    } else {
-      this._promise = Promise.resolve(value)
     }
+    this._promise = Promise.resolve(value)
   }
   toJSON() {
     return this._state

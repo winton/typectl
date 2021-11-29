@@ -67,9 +67,11 @@ describe("typectl", () => {
   })
 
   it("readme prop example 1", async () => {
-    const arg = prop(1)
-    expect(arg.value).toBe(1)
+    const arg = prop<number>()
+
+    setTimeout(() => (arg.value = 1), 100)
     expect(await arg.promise).toBe(1)
+    expect(arg.value).toBe(1)
 
     arg.value = 2
     expect(arg.value).toBe(2)
