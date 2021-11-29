@@ -1,18 +1,38 @@
-import { Readable } from "stream"
-import {
-  RecordType,
-  RecordOutType,
-  RecordInType,
-} from "io-type"
+import { RecordType, RecordOutType, InType } from "io-type"
+
+export type PropRecordType<Obj extends RecordType> = {
+  [P in keyof Obj]: Obj[P] | Prop<Obj[P]>
+}
+
+export type PropRecordInType<Obj extends RecordType> = {
+  [P in keyof Obj]: PropRecordType<InType<Obj[P]>>
+}
+
+export async function propInput(
+  input: Record<string | number | symbol, any>
+) {
+  const out = {}
+  for (const key in input) {
+    if (
+      input[key] instanceof Prop &&
+      !key.endsWith("Prop")
+    ) {
+      out[key] = await input[key].promise
+    } else {
+      out[key] = input[key]
+    }
+  }
+  return out
+}
 
 export function all<Obj extends RecordType>(obj: Obj) {
   return async (
-    input: RecordInType<Obj>
+    input: PropRecordInType<Obj>
   ): Promise<RecordOutType<Obj>> => {
     const outputs: any = {}
 
     for (const key in obj) {
-      outputs[key] = obj[key](input[key])
+      outputs[key] = obj[key](await propInput(input[key]))
     }
 
     await Promise.all(Object.values(outputs))
@@ -27,13 +47,13 @@ export function all<Obj extends RecordType>(obj: Obj) {
 
 export function any<Obj extends RecordType>(obj: Obj) {
   return async (
-    input: Partial<RecordInType<Obj>>
+    input: Partial<PropRecordInType<Obj>>
   ): Promise<Partial<RecordOutType<Obj>>> => {
     const outputs: any = {}
 
     for (const key in obj) {
       if (input[key] !== undefined) {
-        outputs[key] = obj[key](input[key])
+        outputs[key] = obj[key](await propInput(input[key]))
       }
     }
 
@@ -49,13 +69,15 @@ export function any<Obj extends RecordType>(obj: Obj) {
 
 export function each<Obj extends RecordType>(obj: Obj) {
   return async (
-    input: RecordInType<Obj>
+    input: PropRecordInType<Obj>
   ): Promise<RecordOutType<Obj>> => {
     const outputs: any = {}
     const keys = Object.keys(obj)
 
     for (const key of keys) {
-      outputs[key] = await obj[key](input[key])
+      outputs[key] = await obj[key](
+        await propInput(input[key])
+      )
     }
 
     return outputs
@@ -91,6 +113,9 @@ export class Prop<T> {
   }
   toJSON() {
     return this._state
+  }
+  toString() {
+    return JSON.stringify(this)
   }
 }
 

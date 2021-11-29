@@ -1,15 +1,15 @@
 import expect from "expect"
-import { all, any, each, prop, Prop } from "./typectl"
+import { all, any, each, Prop, prop } from "./typectl"
 
 const numberFn = (input: {
-  inputNumber: Prop<number>
-}): { outputNumber: Prop<number> } => ({
+  inputNumber: number
+}): { outputNumber: number } => ({
   outputNumber: input.inputNumber,
 })
 
 const stringFn = (input: {
-  inputString: Prop<string>
-}): { outputString: Prop<string> } => ({
+  inputString: string
+}): { outputString: string } => ({
   outputString: input.inputString,
 })
 
@@ -18,9 +18,9 @@ describe("typectl", () => {
     const a = ({ arg }: { arg: number }) => arg
     const b = ({ arg }: { arg: boolean }) => arg
 
-    const ab = all({ a, b })
+    const abFlow = all({ a, b })
 
-    const out = await ab({
+    const out = await abFlow({
       a: { arg: 1 }, // argument type safety ✅
       b: { arg: true },
     })
@@ -33,9 +33,9 @@ describe("typectl", () => {
     const a = ({ arg }: { arg: number }) => arg
     const b = ({ arg }: { arg: boolean }) => arg
 
-    const ab = any({ a, b })
+    const abFlow = any({ a, b })
 
-    const out = await ab({
+    const out = await abFlow({
       a: { arg: 1 },
       // b argument undefined
     })
@@ -50,9 +50,9 @@ describe("typectl", () => {
     const c = ({ arg }: { arg: string }) => arg
     const d = ({ arg }: { arg: null }) => arg
 
-    const ab = all({ a, b, cd: each({ c, d }) })
+    const abcdFlow = all({ a, b, cd: each({ c, d }) })
 
-    const out = await ab({
+    const out = await abcdFlow({
       a: { arg: 1 }, // argument type safety ✅
       b: { arg: true },
       cd: { c: { arg: "c" }, d: { arg: null } },
@@ -77,20 +77,43 @@ describe("typectl", () => {
   })
 
   it("readme prop example 2", async () => {
-    const a = ({ arg }: { arg: Prop<number> }) => arg.value
-    const b = async ({ arg }: { arg: Prop<number> }) =>
-      await arg.promise
+    const a = ({ arg }: { arg: number }) => arg
+    const aFlow = all({ a })
 
-    const ab = all({ a, b })
-    const arg = prop(1)
-
-    const out = await ab({
-      a: { arg },
-      b: { arg },
+    const out = await aFlow({
+      a: { arg: prop(1) }, // `arg` may be number or Prop<number>
     })
 
     expect(out.a).toBe(1)
-    expect(out.b).toBe(1)
+  })
+
+  it("readme prop example 3", async () => {
+    const a = ({ arg }: { arg: number }) => arg
+    const aFlow = all({ a })
+    const arg = prop<number>()
+
+    setTimeout(() => (arg.value = 1), 100)
+
+    const out = await aFlow({
+      a: { arg },
+    })
+
+    expect(out.a).toBe(1)
+  })
+
+  it("readme prop example 4", async () => {
+    const a = ({ argProp }: { argProp: Prop<number> }) =>
+      (argProp.value = 1)
+
+    const aFlow = all({ a })
+    const argProp = prop<number>()
+
+    const out = await aFlow({
+      a: { argProp }, // input ending with `Prop` bypasses prop resolution
+    })
+
+    expect(argProp.value).toBe(1)
+    expect(out.a).toBe(1)
   })
 
   it("each", async () => {
@@ -99,8 +122,8 @@ describe("typectl", () => {
       numberFn: { inputNumber: prop(1) },
       stringFn: { inputString: prop("2") },
     })
-    expect(x.numberFn.outputNumber.value).toBe(1)
-    expect(x.stringFn.outputString.value).toBe("2")
+    expect(x.numberFn.outputNumber).toBe(1)
+    expect(x.stringFn.outputString).toBe("2")
   })
 
   it("all", async () => {
@@ -109,8 +132,8 @@ describe("typectl", () => {
       numberFn: { inputNumber: prop(1) },
       stringFn: { inputString: prop("2") },
     })
-    expect(x.numberFn.outputNumber.value).toBe(1)
-    expect(x.stringFn.outputString.value).toBe("2")
+    expect(x.numberFn.outputNumber).toBe(1)
+    expect(x.stringFn.outputString).toBe("2")
   })
 
   it("all with each", async () => {
@@ -132,9 +155,9 @@ describe("typectl", () => {
       },
     })
 
-    expect(x.numberFn.outputNumber.value).toBe(1)
-    expect(x.stringFn.outputString.value).toBe("2")
-    expect(x.otherFn.numberFn.outputNumber.value).toBe(1)
-    expect(x.otherFn.stringFn.outputString.value).toBe("2")
+    expect(x.numberFn.outputNumber).toBe(1)
+    expect(x.stringFn.outputString).toBe("2")
+    expect(x.otherFn.numberFn.outputNumber).toBe(1)
+    expect(x.otherFn.stringFn.outputString).toBe("2")
   })
 })

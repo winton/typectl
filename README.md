@@ -16,13 +16,13 @@ import { all } from "typectl"
 const a = ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
-const ab = all({ a, b })
+const abFlow = all({ a, b })
 ```
 
 The resulting function retains type safety on arguments and return values for the functions it executes:
 
 ```typescript
-const out = await ab({
+const out = await abFlow({
   a: { arg: 1 }, // argument type safety ✅
   b: { arg: true },
 })
@@ -41,7 +41,7 @@ import { each } from "typectl"
 const a = ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
-const ab = each({ a, b })
+const abFlow = each({ a, b })
 ```
 
 ## Any
@@ -54,9 +54,9 @@ import { any } from "typectl"
 const a = ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
-const ab = any({ a, b })
+const abFlow = any({ a, b })
 
-const out = await ab({
+const out = await abFlow({
   a: { arg: 1 },
   // b argument undefined
 })
@@ -77,9 +77,9 @@ const b = ({ arg }: { arg: boolean }) => arg
 const c = ({ arg }: { arg: string }) => arg
 const d = ({ arg }: { arg: null }) => arg
 
-const ab = all({ a, b, cd: each({ c, d }) })
+const abcdFlow = all({ a, b, cd: each({ c, d }) })
 
-const out = await ab({
+const out = await abcdFlow({
   a: { arg: 1 }, // argument type safety ✅
   b: { arg: true },
   cd: { c: { arg: "c" }, d: { arg: null } },
@@ -109,23 +109,52 @@ expect(arg.value).toBe(2)
 expect(await arg.promise).toBe(2)
 ```
 
-Use props to wait on variables to populate within your control flows:
+When props are passed as inputs, they reach the control flow as their values:
 
 ```typescript
-import { all, prop, Prop } from "typectl"
+import { all, prop } from "typectl"
 
-const a = ({ arg }: { arg: Prop<number> }) => arg.value
-const b = async ({ arg }: { arg: Prop<number> }) =>
-  await arg.promise
+const a = ({ arg }: { arg: number }) => arg
+const aFlow = all({ a })
 
-const ab = all({ a, b })
-const arg = prop(1)
-
-const out = await ab({
-  a: { arg },
-  b: { arg },
+const out = await aFlow({
+  a: { arg: prop(1) }, // `arg` may be number or Prop<number>
 })
 
 expect(out.a).toBe(1)
-expect(out.b).toBe(1)
+```
+
+The flow function does not execute until the prop value is available:
+
+```typescript
+import { all, prop } from "typectl"
+
+const a = ({ arg }: { arg: number }) => arg
+const aFlow = all({ a })
+const arg = prop<number>()
+
+setTimeout(() => (arg.value = 1), 100)
+
+const out = await aFlow({
+  a: { arg },
+})
+
+expect(out.a).toBe(1)
+```
+
+To bypass the prop value resolution, add `Prop` to the end of the input name:
+
+```typescript
+const a = ({ argProp }: { argProp: Prop<number> }) =>
+  (argProp.value = 1)
+
+const aFlow = all({ a })
+const argProp = prop<number>()
+
+const out = await aFlow({
+  a: { argProp }, // input ending with `Prop` bypasses prop resolution
+})
+
+expect(argProp.value).toBe(1)
+expect(out.a).toBe(1)
 ```
