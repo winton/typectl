@@ -13,10 +13,15 @@ The `all` function is a factory that creates a function that executes a group of
 ```typescript
 import { all } from "typectl"
 
-const a = ({ arg }: { arg: number }) => arg
+// supports sync or async functions ✅
+const a = async ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
+// build control flow caller
 const abFlow = all({ a, b })
+
+// call function control flow
+await abFlow({ a: { arg: 1 }, b: { arg: true }})
 ```
 
 The resulting function retains type safety on arguments and return values for the functions it executes:
