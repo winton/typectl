@@ -179,7 +179,7 @@ expect(argProp.value).toBe(1)
 expect(out.a).toBe(1)
 ```
 
-### Builtin optimization
+### Built-in optimization
 
 By utilizing props, we can create a function that populates the input of another function:
 
