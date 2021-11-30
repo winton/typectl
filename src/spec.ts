@@ -45,9 +45,9 @@ describe("typectl", () => {
   })
 
   it("readme nested example", async () => {
-    const a = ({ arg }: { arg: number }) => arg
+    const a = async ({ arg }: { arg: number }) => arg
     const b = ({ arg }: { arg: boolean }) => arg
-    const c = ({ arg }: { arg: string }) => arg
+    const c = async ({ arg }: { arg: string }) => arg
     const d = ({ arg }: { arg: null }) => arg
 
     const abcdFlow = all({ a, b, cd: each({ c, d }) })
@@ -69,7 +69,7 @@ describe("typectl", () => {
   it("readme prop example 1", async () => {
     const arg = prop<number>()
 
-    setTimeout(() => (arg.value = 1), 100)
+    setTimeout(() => (arg.value = 1), 10)
     expect(await arg.promise).toBe(1)
     expect(arg.value).toBe(1)
 
@@ -97,7 +97,7 @@ describe("typectl", () => {
 
     // async prop ✅
     const arg = prop<number>()
-    setTimeout(() => (arg.value = 1), 100)
+    setTimeout(() => (arg.value = 1), 10)
 
     // `a` not called until prop resolves
     const out = await aFlow({ a: { arg } })
@@ -118,6 +118,26 @@ describe("typectl", () => {
 
     expect(argProp.value).toBe(1)
     expect(out.a).toBe(1)
+  })
+
+  it("readme built-in optimization example", async () => {
+    // get arg
+    const a = ({ arg }: { arg: number }) => arg
+
+    // set arg
+    const b = ({ argProp }: { argProp: Prop<number> }) =>
+      setTimeout(() => (argProp.value = 1), 10)
+
+    const abFlow = all({ a, b })
+    const arg = prop<number>()
+
+    const out = await abFlow({
+      a: { arg },
+      b: { argProp: arg },
+    })
+
+    expect(out.a).toBe(1)
+    expect(arg.value).toBe(1)
   })
 
   it("each", async () => {

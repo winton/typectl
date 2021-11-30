@@ -74,9 +74,9 @@ Nest `all`, `each`, or `any` functions to create complex control flows:
 ```typescript
 import { any, each } from "typectl"
 
-const a = ({ arg }: { arg: number }) => arg
+const a = async ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
-const c = ({ arg }: { arg: string }) => arg
+const c = async ({ arg }: { arg: string }) => arg
 const d = ({ arg }: { arg: null }) => arg
 
 const abcdFlow = all({ a, b, cd: each({ c, d }) })
@@ -97,7 +97,7 @@ expect(out.cd).toEqual({
 
 ## Props
 
-Props allow control flow functions to maintain a simple argument signature while enabling the end user to optionally specify async arguments.
+Props allow the end user to specify an async input without changing the signature of the control flow function's arguments.
 
 Props are awaitable getter-setter factories:
 
@@ -106,7 +106,7 @@ import { prop } from "typectl"
 
 const arg = prop<number>()
 
-setTimeout(() => (arg.value = 1), 100)
+setTimeout(() => (arg.value = 1), 10)
 expect(await arg.promise).toBe(1)
 expect(arg.value).toBe(1)
 
@@ -130,7 +130,7 @@ const out = await aFlow({
 expect(out.a).toBe(1)
 ```
 
-Control flow functions that receive a prop input do not execute until the prop value is resolvable:
+Control flow functions do not execute until the prop value is resolvable:
 
 ```typescript
 import { all, prop } from "typectl"
@@ -142,7 +142,7 @@ const aFlow = all({ a })
 
 // async prop ✅
 const arg = prop<number>()
-setTimeout(() => (arg.value = 1), 100)
+setTimeout(() => (arg.value = 1), 10)
 
 // `a` not called until prop resolves
 const out = await aFlow({ a: { arg } })
@@ -166,3 +166,29 @@ const out = await aFlow({
 expect(argProp.value).toBe(1)
 expect(out.a).toBe(1)
 ```
+
+## Built-in optimization
+
+Using props, control flow functions can depend on outputs from each other, regardless of synchronicity:
+
+```typescript
+// get arg
+const a = ({ arg }: { arg: number }) => arg
+
+// set arg
+const b = ({ argProp }: { argProp: Prop<number> }) =>
+  setTimeout(() => (argProp.value = 1), 10)
+
+const abFlow = all({ a, b })
+const arg = prop<number>()
+
+const out = await abFlow({
+  a: { arg },
+  b: { argProp: arg },
+})
+
+expect(out.a).toBe(1)
+expect(arg.value).toBe(1)
+```
+
+Using this technique, async processing is optimal without putting much thought into it, and remains so in different configurations. Functions are small, simple, and isolated while remaining flexible to end-user composition.

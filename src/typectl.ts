@@ -12,16 +12,24 @@ export async function propInput(
   input: Record<string | number | symbol, any>
 ) {
   const out = {}
+  const promises = []
+
   for (const key in input) {
     if (
       input[key] instanceof Prop &&
       !key.endsWith("Prop")
     ) {
-      out[key] = await input[key].promise
+      promises.push(
+        (async () =>
+          (out[key] = await input[key].promise))()
+      )
     } else {
       out[key] = input[key]
     }
   }
+
+  await Promise.all(promises)
+
   return out
 }
 
@@ -30,12 +38,18 @@ export function all<Obj extends RecordType>(obj: Obj) {
     input: PropRecordInType<Obj>
   ): Promise<RecordOutType<Obj>> => {
     const outputs: any = {}
+    const promises = []
 
     for (const key in obj) {
-      outputs[key] = obj[key](await propInput(input[key]))
+      promises.push(
+        (async () =>
+          (outputs[key] = obj[key](
+            await propInput(input[key])
+          )))()
+      )
     }
 
-    await Promise.all(Object.values(outputs))
+    await Promise.all(promises)
 
     for (const key in outputs) {
       outputs[key] = await outputs[key]
@@ -49,21 +63,15 @@ export function any<Obj extends RecordType>(obj: Obj) {
   return async (
     input: Partial<PropRecordInType<Obj>>
   ): Promise<Partial<RecordOutType<Obj>>> => {
-    const outputs: any = {}
+    const objs: any = {}
 
     for (const key in obj) {
       if (input[key] !== undefined) {
-        outputs[key] = obj[key](await propInput(input[key]))
+        objs[key] = obj[key]
       }
     }
 
-    await Promise.all(Object.values(outputs))
-
-    for (const key in outputs) {
-      outputs[key] = await outputs[key]
-    }
-
-    return outputs
+    return await all(objs)(input)
   }
 }
 
