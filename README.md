@@ -181,7 +181,7 @@ expect(out.a).toBe(1)
 
 ### Built-in optimization
 
-By utilizing props, we can create a function that populates the input of another function:
+By utilizing props, we can add functions to the control flow that populate the input of other functions:
 
 ```typescript
 // get arg
