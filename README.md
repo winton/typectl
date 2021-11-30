@@ -124,7 +124,9 @@ const a = ({ arg }: { arg: number }) => arg
 const caller = all({ a })
 
 const out = await caller({
-  a: { arg: prop(1) }, // `arg` may be number or Prop<number>
+  a: {
+    arg: prop(1), // number | Prop<number>
+  },
 })
 
 expect(out.a).toBe(1)
@@ -135,7 +137,7 @@ Control flow functions do not execute until the prop value is resolvable:
 ```typescript
 import { all, prop } from "typectl"
 
-// simple function input signature ✅
+// simple input type ✅
 const a = ({ arg }: { arg: number }) => arg
 
 const caller = all({ a })

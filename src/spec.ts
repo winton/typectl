@@ -83,14 +83,16 @@ describe("typectl", () => {
     const caller = all({ a })
 
     const out = await caller({
-      a: { arg: prop(1) }, // `arg` may be number or Prop<number>
+      a: {
+        arg: prop(1), // number | Prop<number>
+      },
     })
 
     expect(out.a).toBe(1)
   })
 
   it("readme prop example 3", async () => {
-    // simple function input signature ✅
+    // simple input type ✅
     const a = ({ arg }: { arg: number }) => arg
 
     const caller = all({ a })
