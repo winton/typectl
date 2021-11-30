@@ -191,4 +191,4 @@ expect(out.a).toBe(1)
 expect(arg.value).toBe(1)
 ```
 
-Using this technique, async processing is optimal without putting much thought into it, and remains so in different configurations. Functions are small, simple, and isolated while remaining flexible to end-user composition.
+Using this technique, async processing is optimal out of the box, and remains so in different configurations. Functions are small, simple, and isolated while remaining flexible to end-user composition.
