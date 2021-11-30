@@ -119,17 +119,19 @@ expect(await arg.promise).toBe(2)
 
 ### Prop resolution
 
-When a caller function receives a prop as input, the prop value is resolved before it reaches the control flow function:
+When a caller function receives a prop as input, the control flow function receives the prop value:
 
 ```typescript
 import { all, prop } from "typectl"
 
+// simple input type ✅
 const a = ({ arg }: { arg: number }) => arg
+
 const caller = all({ a })
 
 const out = await caller({
   a: {
-    arg: prop(1), // number | Prop<number>
+    arg: prop(1), // arg: number | Prop<number>
   },
 })
 
@@ -138,7 +140,7 @@ expect(out.a).toBe(1)
 
 #### Async prop resolution
 
-Control flow functions do not execute until the prop value is resolvable:
+Control flow functions do not execute until their input props resolve:
 
 ```typescript
 import { all, prop } from "typectl"
@@ -160,7 +162,7 @@ expect(out.a).toBe(1)
 
 ### Bypass prop resolution
 
-To bypass prop value resolution, add `Prop` to the end of the input name:
+Add `Prop` to the end of the input name to bypass prop value resolution:
 
 ```typescript
 const a = ({ argProp }: { argProp: Prop<number> }) =>
