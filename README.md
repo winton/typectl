@@ -203,6 +203,6 @@ expect(out.a).toBe(1)
 expect(arg.value).toBe(1)
 ```
 
-Using this technique, optimal async control flow is built-in, and remains optimized when the control flow is modified.
+Using this technique, optimal async control flow is built-in, and remains optimized as the control flow becomes more complex.
 
 Functions can now be small, simple, and isolated while remaining flexible to end-user composition.
