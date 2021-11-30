@@ -99,7 +99,9 @@ expect(out.cd).toEqual({
 
 Props allow the end user to specify an async input without changing the signature of the control flow function's arguments.
 
-Props are awaitable getter-setter factories:
+### Getter-setter
+
+Props are awaitable getter-setters:
 
 ```typescript
 import { prop } from "typectl"
@@ -114,6 +116,8 @@ arg.value = 2
 expect(arg.value).toBe(2)
 expect(await arg.promise).toBe(2)
 ```
+
+### Prop as caller input
 
 When a caller function receives a prop as input, the value of the prop is resolved before it reaches the control flow function:
 
@@ -131,6 +135,8 @@ const out = await caller({
 
 expect(out.a).toBe(1)
 ```
+
+### Automatic async prop resolution
 
 Control flow functions do not execute until the prop value is resolvable:
 
@@ -151,6 +157,8 @@ const out = await caller({ a: { arg } })
 
 expect(out.a).toBe(1)
 ```
+
+### Bypass prop resolution
 
 To bypass prop value resolution, add `Prop` to the end of the input name:
 
