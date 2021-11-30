@@ -60,7 +60,7 @@ const caller = any({ a, b })
 
 const out = await caller({
   a: { arg: 1 },
-  // b argument undefined
+  // b argument undefined, not called
 })
 
 expect(out.a).toBe(1)
