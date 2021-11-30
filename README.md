@@ -179,9 +179,9 @@ expect(argProp.value).toBe(1)
 expect(out.a).toBe(1)
 ```
 
-### Built-in optimization
+### Builtin optimization
 
-By utilizing props, a control flow function may depend on outputs from another function (regardless of synchronicity):
+By utilizing props, we can create a function that populates the input of another function:
 
 ```typescript
 // get arg
@@ -203,6 +203,6 @@ expect(out.a).toBe(1)
 expect(arg.value).toBe(1)
 ```
 
-Using this technique, optimal async processing is built-in, and remains optimized in different configurations.
+Using this technique, optimal async control flow is built-in, and remains optimized when the control flow is modified.
 
 Functions can now be small, simple, and isolated while remaining flexible to end-user composition.
