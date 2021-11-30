@@ -179,9 +179,9 @@ expect(argProp.value).toBe(1)
 expect(out.a).toBe(1)
 ```
 
-## Built-in optimization
+### Built-in optimization
 
-Using props, control flow functions can depend on outputs from each other, regardless of synchronicity:
+By utilizing props, control flow functions can depend on outputs from each other (regardless of synchronicity):
 
 ```typescript
 // get arg
