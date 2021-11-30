@@ -18,9 +18,9 @@ describe("typectl", () => {
     const a = async ({ arg }: { arg: number }) => arg
     const b = ({ arg }: { arg: boolean }) => arg
 
-    const abFlow = all({ a, b })
+    const caller = all({ a, b })
 
-    const out = await abFlow({
+    const out = await caller({
       a: { arg: 1 }, // argument type safety ✅
       b: { arg: true },
     })
@@ -33,9 +33,9 @@ describe("typectl", () => {
     const a = ({ arg }: { arg: number }) => arg
     const b = ({ arg }: { arg: boolean }) => arg
 
-    const abFlow = any({ a, b })
+    const caller = any({ a, b })
 
-    const out = await abFlow({
+    const out = await caller({
       a: { arg: 1 },
       // b argument undefined
     })
@@ -50,9 +50,9 @@ describe("typectl", () => {
     const c = async ({ arg }: { arg: string }) => arg
     const d = ({ arg }: { arg: null }) => arg
 
-    const abcdFlow = all({ a, b, cd: each({ c, d }) })
+    const caller = all({ a, b, cd: each({ c, d }) })
 
-    const out = await abcdFlow({
+    const out = await caller({
       a: { arg: 1 }, // argument type safety ✅
       b: { arg: true },
       cd: { c: { arg: "c" }, d: { arg: null } },
@@ -80,9 +80,9 @@ describe("typectl", () => {
 
   it("readme prop example 2", async () => {
     const a = ({ arg }: { arg: number }) => arg
-    const aFlow = all({ a })
+    const caller = all({ a })
 
-    const out = await aFlow({
+    const out = await caller({
       a: { arg: prop(1) }, // `arg` may be number or Prop<number>
     })
 
@@ -93,14 +93,14 @@ describe("typectl", () => {
     // simple function input signature ✅
     const a = ({ arg }: { arg: number }) => arg
 
-    const aFlow = all({ a })
+    const caller = all({ a })
 
     // async prop ✅
     const arg = prop<number>()
     setTimeout(() => (arg.value = 1), 10)
 
     // `a` not called until prop resolves
-    const out = await aFlow({ a: { arg } })
+    const out = await caller({ a: { arg } })
 
     expect(out.a).toBe(1)
   })
@@ -109,10 +109,10 @@ describe("typectl", () => {
     const a = ({ argProp }: { argProp: Prop<number> }) =>
       (argProp.value = 1)
 
-    const aFlow = all({ a })
+    const caller = all({ a })
     const argProp = prop<number>()
 
-    const out = await aFlow({
+    const out = await caller({
       a: { argProp }, // input ending with `Prop` bypasses prop resolution
     })
 
@@ -128,10 +128,10 @@ describe("typectl", () => {
     const b = ({ argProp }: { argProp: Prop<number> }) =>
       setTimeout(() => (argProp.value = 1), 10)
 
-    const abFlow = all({ a, b })
+    const caller = all({ a, b })
     const arg = prop<number>()
 
-    const out = await abFlow({
+    const out = await caller({
       a: { arg },
       b: { argProp: arg },
     })

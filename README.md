@@ -18,13 +18,13 @@ const a = async ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
 // build caller function
-const abFlow = all({ a, b })
+const caller = all({ a, b })
 ```
 
 Calling the function control flow preserves type safety of arguments and return values:
 
 ```typescript
-const out = await abFlow({
+const out = await caller({
   a: { arg: 1 }, // argument type safety ✅
   b: { arg: true },
 })
@@ -43,7 +43,7 @@ import { each } from "typectl"
 const a = ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
-const abFlow = each({ a, b })
+const caller = each({ a, b })
 ```
 
 ## Any
@@ -56,9 +56,9 @@ import { any } from "typectl"
 const a = ({ arg }: { arg: number }) => arg
 const b = ({ arg }: { arg: boolean }) => arg
 
-const abFlow = any({ a, b })
+const caller = any({ a, b })
 
-const out = await abFlow({
+const out = await caller({
   a: { arg: 1 },
   // b argument undefined
 })
@@ -79,9 +79,9 @@ const b = ({ arg }: { arg: boolean }) => arg
 const c = async ({ arg }: { arg: string }) => arg
 const d = ({ arg }: { arg: null }) => arg
 
-const abcdFlow = all({ a, b, cd: each({ c, d }) })
+const caller = all({ a, b, cd: each({ c, d }) })
 
-const out = await abcdFlow({
+const out = await caller({
   a: { arg: 1 }, // argument type safety ✅
   b: { arg: true },
   cd: { c: { arg: "c" }, d: { arg: null } },
@@ -121,9 +121,9 @@ When a caller function receives a prop as input, the value of the prop is resolv
 import { all, prop } from "typectl"
 
 const a = ({ arg }: { arg: number }) => arg
-const aFlow = all({ a })
+const caller = all({ a })
 
-const out = await aFlow({
+const out = await caller({
   a: { arg: prop(1) }, // `arg` may be number or Prop<number>
 })
 
@@ -138,14 +138,14 @@ import { all, prop } from "typectl"
 // simple function input signature ✅
 const a = ({ arg }: { arg: number }) => arg
 
-const aFlow = all({ a })
+const caller = all({ a })
 
 // async prop ✅
 const arg = prop<number>()
 setTimeout(() => (arg.value = 1), 10)
 
 // `a` not called until prop resolves
-const out = await aFlow({ a: { arg } })
+const out = await caller({ a: { arg } })
 
 expect(out.a).toBe(1)
 ```
@@ -156,10 +156,10 @@ To bypass prop value resolution, add `Prop` to the end of the input name:
 const a = ({ argProp }: { argProp: Prop<number> }) =>
   (argProp.value = 1)
 
-const aFlow = all({ a })
+const caller = all({ a })
 const argProp = prop<number>()
 
-const out = await aFlow({
+const out = await caller({
   a: { argProp }, // input ending with `Prop` bypasses prop resolution
 })
 
@@ -179,10 +179,10 @@ const a = ({ arg }: { arg: number }) => arg
 const b = ({ argProp }: { argProp: Prop<number> }) =>
   setTimeout(() => (argProp.value = 1), 10)
 
-const abFlow = all({ a, b })
+const caller = all({ a, b })
 const arg = prop<number>()
 
-const out = await abFlow({
+const out = await caller({
   a: { arg },
   b: { argProp: arg },
 })
