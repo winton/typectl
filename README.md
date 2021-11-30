@@ -117,9 +117,9 @@ expect(arg.value).toBe(2)
 expect(await arg.promise).toBe(2)
 ```
 
-### Prop as caller input
+### Prop resolution
 
-When a caller function receives a prop as input, the value of the prop is resolved before it reaches the control flow function:
+When a caller function receives a prop as input, the prop value is resolved before it reaches the control flow function:
 
 ```typescript
 import { all, prop } from "typectl"
@@ -136,7 +136,7 @@ const out = await caller({
 expect(out.a).toBe(1)
 ```
 
-### Automatic async prop resolution
+#### Async prop resolution
 
 Control flow functions do not execute until the prop value is resolvable:
 
