@@ -8,15 +8,13 @@ npm install typectl
 
 ## Goals
 
-1. A type-safe API for defining complex control flows of generic functions.
+1. A type-safe API for defining complex control flows of generic (reusable) functions.
 2. Full runtime control over input and output variable mapping.
 3. Dynamic resolution of inputs and outputs, resulting in naturally optimized code.
 
 ## Function API
 
-The `typectl` pattern promotes keeping functions generic and isolated.
-
-The function API requires that arguments and return values are defined as objects:
+The function API requires defining arguments and return values as objects:
 
 ```typescript
 // incrementNumber.ts
@@ -38,15 +36,15 @@ Functions may be async or not have inputs/outputs. For example, this function is
 export default async () => {}
 ```
 
-## Concurrency
+## Your first control flow
 
-Let's run a function concurrently using `typectl`:
+Let's run the `incrementNumber` function concurrently using `typectl`:
 
 ```typescript
 import { all, prop } from "typectl"
 import incrementNumber from "./incrementNumber"
 
-// build caller function
+// control flow builder
 const caller = all({
   incrementNumberBy1: incrementNumber,
   incrementNumberBy2: incrementNumber,
@@ -71,19 +69,21 @@ expect(num.value).toBe(3)
 
 ## Props
 
-Props are getter-setters that you can `await` for value assignment. Control flow functions that depend on a prop as input will automatically wait for the prop to receive a value before executing.
+Props are getter-setters that can `await` value assignment. Control flows with prop input mappings automatically wait for the prop to populate.
 
-Props are optional when providing input mappings, but output mappings must always use props.
+Props are optional when providing input mappings, but required with output mappings.
 
-## Caller builder functions
+## Control flow builders
 
-In addition to the `all` caller builder function, there is also `each` and `any`.
+In addition to the `all` builder function, there is also `each` and `any`:
 
-The `each` caller builder will execute functions in succession.
+| Function | Description |
+| --- | --- |
+| `all` | concurrent execution |
+| `each` | serial execution |
+| `any` | concurrent execution (if called with input or output mapping) |
 
-The `any` caller builder will only run a control flow function if an input or output mapping is provided.
-
-### Caller builder chains
+### Control flow builder chains
 
 Nest `all`, `each`, or `any` functions to create complex control flows:
 
@@ -91,7 +91,7 @@ Nest `all`, `each`, or `any` functions to create complex control flows:
 import { all, each, any, prop } from "typectl"
 import incrementNumber from "./incrementNumber"
 
-// build caller function
+// control flow builder
 const caller = all({
   incrementNumberBy1: incrementNumber,
   incrementNumbersInSuccession: each({
