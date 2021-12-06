@@ -50,7 +50,7 @@ describe("typectl", () => {
       }),
     })
 
-    // create prop
+    // create props
     const num = prop<number>()
     const num2 = prop<number>()
     const num3 = prop<number>()
@@ -58,7 +58,7 @@ describe("typectl", () => {
 
     // call control flow
     await caller({
-      // define input & output mappings
+      // input & output mappings
       incrementNumberBy1: [
         { num: 0, increment: 1 },
         { num },

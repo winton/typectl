@@ -104,7 +104,7 @@ const caller = all({
   }),
 })
 
-// create prop
+// create props
 const num = prop<number>()
 const num2 = prop<number>()
 const num3 = prop<number>()
@@ -112,7 +112,7 @@ const num4 = prop<number>()
 
 // call control flow
 await caller({
-  // define input & output mappings
+  // input & output mappings
   incrementNumberBy1: [
     { num: 0, increment: 1 },
     { num },
