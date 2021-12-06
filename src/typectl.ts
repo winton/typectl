@@ -60,14 +60,15 @@ export async function propInput(
   return out
 }
 
-export async function propOutput(
+export function propOutput(
   output: Record<string | number | symbol, any>,
   outputMap: Record<string | number | symbol, any>
 ) {
   for (const key in outputMap) {
     if (outputMap[key] instanceof Prop) {
       if (output[key] instanceof Prop) {
-        outputMap[key].value = await output[key]
+        ;(async () =>
+          (outputMap[key].value = await output[key]))()
       } else {
         outputMap[key].value = output[key]
       }
@@ -84,7 +85,7 @@ export function all<Obj extends RecordType>(obj: Obj) {
     for (const key in obj) {
       promises.push(
         (async () =>
-          await propOutput(
+          propOutput(
             await obj[key](await propInput(input[key][0])),
             input[key][1]
           ))()
@@ -118,7 +119,7 @@ export function each<Obj extends RecordType>(obj: Obj) {
     const keys = Object.keys(obj)
 
     for (const key of keys) {
-      await propOutput(
+      propOutput(
         await obj[key](await propInput(input[key][0])),
         input[key][1]
       )
