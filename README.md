@@ -85,9 +85,9 @@ const hi = prop()
 hi.value = "hi" // no error!
 ```
 
-### Awaitable
+### Await prop assignment
 
-You can also `await` prop assignment:
+Wait for a prop to have a value by using the `promise` attribute:
 
 ```typescript
 import { prop } from "typectl"
@@ -97,21 +97,21 @@ setTimeout(() => hello.value = "hello", 100)
 expect(await hello.promise).toBe("hello")
 ```
 
-### Control flow variable mappings
+### Props in variable mappings
 
-When calling a control flow, input mappings may contain the original input types or the prop version. If a prop input is unresolved, the caller waits for the prop value to become available before executing the dependent function.
+When calling a control flow, input mappings may contain the original input types or the prop version. If a prop input is unresolved, the caller waits for the prop value to become available before executing the receiving function.
 
-Output mappings, on the other hand, **must** use the prop version of the original output types, if provided.
+Output mappings are optional, but when provided, **must** use the prop version of the original output type.
 
 ## Control flow builder functions
 
-In addition to the `all` builder function, there is also `each` and `any`:
+In addition to the `all` builder function, there are also `any` and `each`:
 
 | Function | Description |
 | --- | --- |
-| `all` | Concurrent execution |
-| `any` | Concurrent execution (if input or output mapping provided) |
-| `each` | Serial execution |
+| `all` | Concurrent execution of *all* functions |
+| `any` | Concurrent execution of *any* functions with input maps |
+| `each` | Serial execution of *all* functions |
 
 ### Nested control flow builders
 
