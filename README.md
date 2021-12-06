@@ -53,7 +53,7 @@ const caller = all({
 // create prop (see next section)
 const num = prop<number>()
 
-// call functions
+// call control flow
 await caller({
   // define input & output mappings
   incrementNumberBy1: [
@@ -110,7 +110,7 @@ const num2 = prop<number>()
 const num3 = prop<number>()
 const num4 = prop<number>()
 
-// call functions
+// call control flow
 await caller({
   // define input & output mappings
   incrementNumberBy1: [

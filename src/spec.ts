@@ -12,7 +12,8 @@ const incrementNumber = ({
 }
 
 describe("typectl", () => {
-  it("concurrency", async () => {
+  it("your first control flow", async () => {
+    // control flow builder
     const caller = all({
       incrementNumberBy1: incrementNumber,
       incrementNumberBy2: incrementNumber,
@@ -21,7 +22,7 @@ describe("typectl", () => {
     // create prop (see next section)
     const num = prop<number>()
 
-    // call functions
+    // call control flow
     await caller({
       // define input & output mappings
       incrementNumberBy1: [
@@ -35,8 +36,8 @@ describe("typectl", () => {
     expect(num.value).toBe(3)
   })
 
-  it("chains", async () => {
-    // build caller function
+  it("control flow builder chains", async () => {
+    // control flow builder
     const caller = all({
       incrementNumberBy1: incrementNumber,
       incrementNumbersInSuccession: each({
@@ -55,7 +56,7 @@ describe("typectl", () => {
     const num3 = prop<number>()
     const num4 = prop<number>()
 
-    // call functions
+    // call control flow
     await caller({
       // define input & output mappings
       incrementNumberBy1: [
