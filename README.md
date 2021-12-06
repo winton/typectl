@@ -133,6 +133,7 @@ await caller({
             { num: num3, increment: 4 },
             { num: num4 },
           ],
+          // don't run incrementNumberBy5
           incrementNumberBy5: false,
         },
       ],
