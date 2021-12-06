@@ -9,8 +9,8 @@ npm install typectl
 ## Goals
 
 1. A type-safe API for defining complex control flows of pure (isolated, simply typed) functions.
-2. Make dynamic input and output variable mapping within the control flow possible at runtime.
-3. Use of the pattern should naturally optimize control flow execution.
+2. Map inputs and outputs to functions within the control flow at runtime.
+3. Control flow execution should be naturally optimal by use of the pattern.
 
 ## Function API
 
