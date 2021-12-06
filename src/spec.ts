@@ -24,7 +24,7 @@ describe("typectl", () => {
 
     // call control flow
     await caller({
-      // define input & output mappings
+      // input & output mappings
       incrementNumberBy1: [
         { num: 0, increment: 1 },
         { num },

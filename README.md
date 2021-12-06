@@ -30,7 +30,7 @@ export default ({
 }
 ```
 
-Functions may be async or not have inputs/outputs. For example, this function is valid:
+Functions may be async or without inputs/outputs. For example, this function is valid:
 
 ```typescript
 export default async () => {}
@@ -55,7 +55,7 @@ const num = prop<number>()
 
 // call control flow
 await caller({
-  // define input & output mappings
+  // input & output mappings
   incrementNumberBy1: [
     { num: 0, increment: 1 },
     { num },
