@@ -83,7 +83,7 @@ In addition to the `all` builder function, there is also `each` and `any`:
 | `each` | Serial execution |
 | `any` | Concurrent execution (if input or output mapping provided) |
 
-### Control flow builder chains
+### Nested control flow builders
 
 Nest `all`, `each`, or `any` functions to create complex control flows:
 
@@ -91,7 +91,7 @@ Nest `all`, `each`, or `any` functions to create complex control flows:
 import { all, each, any, prop } from "typectl"
 import incrementNumber from "./incrementNumber"
 
-// control flow builder
+// nested control flow builders
 const caller = all({
   incrementNumberBy1: incrementNumber,
   incrementNumbersInSuccession: each({

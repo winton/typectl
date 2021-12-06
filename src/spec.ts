@@ -37,7 +37,7 @@ describe("typectl", () => {
   })
 
   it("control flow builder chains", async () => {
-    // control flow builder
+    // nested control flow builders
     const caller = all({
       incrementNumberBy1: incrementNumber,
       incrementNumbersInSuccession: each({
