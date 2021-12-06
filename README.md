@@ -50,7 +50,7 @@ const caller = all({
   incrementNumberBy2: incrementNumber,
 })
 
-// create prop (see next section)
+// create props (see next section)
 const firstNum = prop<number>()
 const finalNum = prop<number>()
 
