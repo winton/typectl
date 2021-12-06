@@ -20,20 +20,41 @@ describe("typectl", () => {
     })
 
     // create prop (see next section)
-    const num = prop<number>()
+    const firstNum = prop<number>()
+    const finalNum = prop<number>()
 
     // call control flow
     await caller({
       // input & output mappings
       incrementNumberBy1: [
         { num: 0, increment: 1 },
-        { num },
+        { num: firstNum },
       ],
-      incrementNumberBy2: [{ num, increment: 2 }, { num }],
+      incrementNumberBy2: [
+        { num: firstNum, increment: 2 },
+        { num: finalNum },
+      ],
     })
 
     // drumroll please...
-    expect(num.value).toBe(3)
+    expect(finalNum.value).toBe(3)
+  })
+
+  it("only set props once", async () => {
+    const hello = prop("hello")
+
+    expect(() => {
+      hello.value = "hi" // error!
+    }).toThrow()
+
+    const hi = prop()
+    hi.value = "hi" // no error!
+  })
+
+  it("awaits props", async () => {
+    const hello = prop()
+    setTimeout(() => (hello.value = "hello"), 10)
+    expect(await hello.promise).toBe("hello")
   })
 
   it("control flow builder chains", async () => {

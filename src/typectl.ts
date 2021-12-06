@@ -146,11 +146,13 @@ export class Prop<T> {
     return this._state
   }
   set value(value: T) {
-    this._state = value
-    if (this._resolve) {
-      this._resolve(value)
+    if (this._state !== undefined) {
+      throw new Error(
+        "Prop cannot receive a value more than once."
+      )
     }
-    this._promise = Promise.resolve(value)
+    this._state = value
+    this._resolve(value)
   }
   toJSON() {
     return this._state

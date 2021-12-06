@@ -8,9 +8,9 @@ npm install typectl
 
 ## Goals
 
-1. A type-safe API for defining complex control flows of generic (reusable) functions.
-2. Full runtime control over input and output variable mapping within the control flow.
-3. Naturally optimized code using dynamic resolution of inputs and outputs.
+1. A type-safe API for defining complex control flows of pure (isolated, simply typed) functions.
+2. Make dynamic input and output variable mapping within the control flow possible at runtime.
+3. Use of the pattern should naturally optimize control flow execution.
 
 ## Function API
 
@@ -51,41 +51,71 @@ const caller = all({
 })
 
 // create prop (see next section)
-const num = prop<number>()
+const firstNum = prop<number>()
+const finalNum = prop<number>()
 
 // call control flow
 await caller({
   // input & output mappings
   incrementNumberBy1: [
     { num: 0, increment: 1 },
-    { num },
+    { num: firstNum },
   ],
-  incrementNumberBy2: [{ num, increment: 2 }, { num }],
+  incrementNumberBy2: [
+    { num: firstNum, increment: 2 },
+    { num: finalNum },
+  ],
 })
 
 // drumroll please...
-expect(num.value).toBe(3)
+expect(finalNum.value).toBe(3)
 ```
 
 ## Props
 
-Props are getter-setters that can `await` initial value assignment. Control flow functions with prop input mappings automatically wait for the prop to populate.
+Props are getter-setters that can only be set once:
 
-Props are optional when providing input mappings, but required with output mappings.
+```typescript
+import { prop } from "typectl"
 
-## Control flow builders
+const hello = prop("hello")
+hello.value = "hi" // error!
+
+const hi = prop()
+hi.value = "hi" // no error!
+```
+
+### Awaitable
+
+You can also `await` prop assignment:
+
+```typescript
+import { prop } from "typectl"
+
+const hello = prop()
+setTimeout(() => hello.value = "hello", 100)
+expect(await hello.promise).toBe("hello")
+```
+
+### Control flow variable mappings
+
+When calling a control flow, input mappings may contain the original input types or the prop version. If a prop input is unresolved, the caller waits for the prop value to become available before executing the dependent function.
+
+Output mappings, on the other hand, **must** use the prop version of the original output types, if provided.
+
+## Control flow builder functions
 
 In addition to the `all` builder function, there is also `each` and `any`:
 
 | Function | Description |
 | --- | --- |
 | `all` | Concurrent execution |
-| `each` | Serial execution |
 | `any` | Concurrent execution (if input or output mapping provided) |
+| `each` | Serial execution |
 
 ### Nested control flow builders
 
-Nest `all`, `each`, or `any` functions to create complex control flows:
+Nest builder functions to create complex control flows:
 
 ```typescript
 import { all, each, any, prop } from "typectl"
