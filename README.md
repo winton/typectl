@@ -16,7 +16,7 @@ npm install typectl
 
 The `typectl` pattern promotes keeping functions generic and isolated.
 
-The API requires defining arguments and return values with objects:
+The function API requires that arguments and return values are defined as objects:
 
 ```typescript
 // incrementNumber.ts
@@ -32,7 +32,7 @@ export default ({
 }
 ```
 
-Functions may also be async or have undefined input/output (this function is valid):
+Functions may be async or not have inputs/outputs. For example, this function is valid:
 
 ```typescript
 export default async () => {}
