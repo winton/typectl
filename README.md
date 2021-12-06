@@ -99,9 +99,9 @@ expect(await hello.promise).toBe("hello")
 
 ### Props in variable mappings
 
-When calling a control flow, input mappings may contain either the original input type or the prop version of the input type. If a prop is provided unassigned, the caller waits for it to become available before executing its dependent function.
+When calling a control flow, input mappings may contain either the original function input types or the prop version of the input types. If the prop version is provided unassigned, the caller waits for it to become available before executing its dependent function.
 
-Because the function waits for its prop inputs, it is usually most optimal to throw all of your functions in a single `all` and allow the caller to reason about execution order based on the resolution of its input props.
+Because control flow functions wait for prop input resolution, you can usually write the most optimal code by throwing all of your functions in a single `all` and allow the caller to reason about execution order based on its inputs.
 
 Output mappings are optional, but when provided, **must** use the prop version of the original output type.
 
