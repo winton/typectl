@@ -52,7 +52,7 @@ describe("typectl", () => {
   })
 
   it("awaits props", async () => {
-    const hello = prop()
+    const hello = prop<string>()
     setTimeout(() => (hello.value = "hello"), 10)
     expect(await hello.promise).toBe("hello")
   })

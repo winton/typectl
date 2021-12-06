@@ -82,24 +82,24 @@ const hello = prop("hello")
 hello.value = "hi" // error!
 
 const hi = prop()
-hi.value = "hi" // no error!
+hi.value = "hi" // success!
 ```
 
 ### Await prop assignment
 
-Wait for a prop to have a value by using the `promise` attribute:
+Wait for a prop to populate by using the `promise` attribute:
 
 ```typescript
 import { prop } from "typectl"
 
-const hello = prop()
-setTimeout(() => hello.value = "hello", 100)
+const hello = prop<string>()
+setTimeout(() => (hello.value = "hello"), 10)
 expect(await hello.promise).toBe("hello")
 ```
 
 ### Props in variable mappings
 
-When calling a control flow, input mappings may contain the original input types or the prop version. If a prop input is unresolved, the caller waits for the prop value to become available before executing the receiving function.
+When calling a control flow, input mappings may contain either the original input type or the prop version. If a prop is unassigned, the caller waits for it to become available before executing the receiving function.
 
 Output mappings are optional, but when provided, **must** use the prop version of the original output type.
 
