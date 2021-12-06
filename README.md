@@ -69,7 +69,7 @@ expect(num.value).toBe(3)
 
 ## Props
 
-Props are getter-setters that can `await` initial value assignment. Control flows with prop input mappings automatically wait for the prop to populate.
+Props are getter-setters that can `await` initial value assignment. Control flow functions with prop input mappings automatically wait for the prop to populate.
 
 Props are optional when providing input mappings, but required with output mappings.
 
