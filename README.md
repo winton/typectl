@@ -8,15 +8,15 @@ npm install typectl
 
 ## Goals
 
-1. Define complex control flows from a collection of generic functions using a type-safe API.
-2. Give the end user full control over control flow input and output mapping at runtime.
-3. Self-optimize asynchronous code based on the dynamic resolution of inputs and outputs.
+1. A type-safe API for defining complex control flows of generic functions.
+2. Full runtime control over input and output variable mapping.
+3. Dynamic resolution of inputs and outputs, resulting in naturally optimized code.
 
 ## Function API
 
-The `typectl` pattern promotes keeping functions isolated and generic.
+The `typectl` pattern promotes keeping functions generic and isolated.
 
-If provided, inputs and outputs should be represented by a single object:
+The API requires defining arguments and return values with objects:
 
 ```typescript
 // incrementNumber.ts
@@ -32,7 +32,7 @@ export default ({
 }
 ```
 
-Functions may also be async or have undefined input/output:
+Functions may also be async or have undefined input/output (this function is valid):
 
 ```typescript
 export default async () => {}
@@ -40,7 +40,7 @@ export default async () => {}
 
 ## Concurrency
 
-Let's run a function twice (concurrently) using `typectl`:
+Let's run a function concurrently using `typectl`:
 
 ```typescript
 import { all, prop } from "typectl"
