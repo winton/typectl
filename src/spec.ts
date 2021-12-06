@@ -1,189 +1,91 @@
 import expect from "expect"
-import { all, any, each, Prop, prop } from "./typectl"
+import { all, any, each, prop } from "./typectl"
 
-const numberFn = (input: {
-  inputNumber: number
-}): { outputNumber: number } => ({
-  outputNumber: input.inputNumber,
-})
-
-const stringFn = (input: {
-  inputString: string
-}): { outputString: string } => ({
-  outputString: input.inputString,
-})
+const incrementNumber = ({
+  num,
+  increment,
+}: {
+  num: number
+  increment: number
+}) => {
+  return { num: num + increment }
+}
 
 describe("typectl", () => {
-  it("readme all example", async () => {
-    const a = async ({ arg }: { arg: number }) => arg
-    const b = ({ arg }: { arg: boolean }) => arg
-
-    const caller = all({ a, b })
-
-    const out = await caller({
-      a: { arg: 1 }, // argument type safety ✅
-      b: { arg: true },
+  it("concurrency", async () => {
+    const caller = all({
+      incrementNumberBy1: incrementNumber,
+      incrementNumberBy2: incrementNumber,
     })
 
-    expect(out.a).toBe(1) // return type safety ✅
-    expect(out.b).toBe(true)
-  })
+    // create prop (see next section)
+    const num = prop<number>()
 
-  it("readme any example", async () => {
-    const a = ({ arg }: { arg: number }) => arg
-    const b = ({ arg }: { arg: boolean }) => arg
-
-    const caller = any({ a, b })
-
-    const out = await caller({
-      a: { arg: 1 },
-      // b argument undefined, not called
+    // call functions
+    await caller({
+      // define input & output mappings
+      incrementNumberBy1: [
+        { num: 0, increment: 1 },
+        { num },
+      ],
+      incrementNumberBy2: [{ num, increment: 2 }, { num }],
     })
 
-    expect(out.a).toBe(1)
-    expect(out.b).toBe(undefined)
+    // drumroll please...
+    expect(num.value).toBe(3)
   })
 
-  it("readme nested example", async () => {
-    const a = async ({ arg }: { arg: number }) => arg
-    const b = ({ arg }: { arg: boolean }) => arg
-    const c = async ({ arg }: { arg: string }) => arg
-    const d = ({ arg }: { arg: null }) => arg
-
-    const caller = all({ a, b, cd: each({ c, d }) })
-
-    const out = await caller({
-      a: { arg: 1 }, // argument type safety ✅
-      b: { arg: true },
-      cd: { c: { arg: "c" }, d: { arg: null } },
+  it("chains", async () => {
+    // build caller function
+    const caller = all({
+      incrementNumberBy1: incrementNumber,
+      incrementNumbersInSuccession: each({
+        incrementNumberBy2: incrementNumber,
+        incrementNumberBy3: incrementNumber,
+        incrementAnyNumber: any({
+          incrementNumberBy4: incrementNumber,
+          incrementNumberBy5: incrementNumber,
+        }),
+      }),
     })
 
-    expect(out.a).toBe(1) // return type safety ✅
-    expect(out.b).toBe(true)
-    expect(out.cd).toEqual({
-      c: "c",
-      d: null,
-    })
-  })
+    // create prop
+    const num = prop<number>()
+    const num2 = prop<number>()
+    const num3 = prop<number>()
+    const num4 = prop<number>()
 
-  it("readme prop example 1", async () => {
-    const arg = prop<number>()
-
-    setTimeout(() => (arg.value = 1), 10)
-    expect(await arg.promise).toBe(1)
-    expect(arg.value).toBe(1)
-
-    arg.value = 2
-    expect(arg.value).toBe(2)
-    expect(await arg.promise).toBe(2)
-  })
-
-  it("readme prop example 2", async () => {
-    const a = ({ arg }: { arg: number }) => arg
-    const caller = all({ a })
-
-    const out = await caller({
-      a: {
-        arg: prop(1), // number | Prop<number>
-      },
-    })
-
-    expect(out.a).toBe(1)
-  })
-
-  it("readme prop example 3", async () => {
-    // simple input type ✅
-    const a = ({ arg }: { arg: number }) => arg
-
-    const caller = all({ a })
-
-    // async prop ✅
-    const arg = prop<number>()
-    setTimeout(() => (arg.value = 1), 10)
-
-    // `a` not called until prop resolves
-    const out = await caller({ a: { arg } })
-
-    expect(out.a).toBe(1)
-  })
-
-  it("readme prop example 4", async () => {
-    const a = ({ argProp }: { argProp: Prop<number> }) =>
-      (argProp.value = 1)
-
-    const caller = all({ a })
-    const argProp = prop<number>()
-
-    const out = await caller({
-      a: { argProp }, // input ending with `Prop` bypasses prop resolution
+    // call functions
+    await caller({
+      // define input & output mappings
+      incrementNumberBy1: [
+        { num: 0, increment: 1 },
+        { num },
+      ],
+      incrementNumbersInSuccession: [
+        {
+          incrementNumberBy2: [
+            { num, increment: 2 },
+            { num: num2 },
+          ],
+          incrementNumberBy3: [
+            { num: num2, increment: 3 },
+            { num: num3 },
+          ],
+          incrementAnyNumber: [
+            {
+              incrementNumberBy4: [
+                { num: num3, increment: 4 },
+                { num: num4 },
+              ],
+              incrementNumberBy5: false,
+            },
+          ],
+        },
+      ],
     })
 
-    expect(argProp.value).toBe(1)
-    expect(out.a).toBe(1)
-  })
-
-  it("readme built-in optimization example", async () => {
-    // get arg
-    const a = ({ arg }: { arg: number }) => arg
-
-    // set arg
-    const b = ({ argProp }: { argProp: Prop<number> }) =>
-      setTimeout(() => (argProp.value = 1), 10)
-
-    const caller = all({ a, b })
-    const arg = prop<number>()
-
-    const out = await caller({
-      a: { arg },
-      b: { argProp: arg },
-    })
-
-    expect(out.a).toBe(1)
-    expect(arg.value).toBe(1)
-  })
-
-  it("each", async () => {
-    const fn = each({ numberFn, stringFn })
-    const x = await fn({
-      numberFn: { inputNumber: prop(1) },
-      stringFn: { inputString: prop("2") },
-    })
-    expect(x.numberFn.outputNumber).toBe(1)
-    expect(x.stringFn.outputString).toBe("2")
-  })
-
-  it("all", async () => {
-    const fn = all({ numberFn, stringFn })
-    const x = await fn({
-      numberFn: { inputNumber: prop(1) },
-      stringFn: { inputString: prop("2") },
-    })
-    expect(x.numberFn.outputNumber).toBe(1)
-    expect(x.stringFn.outputString).toBe("2")
-  })
-
-  it("all with each", async () => {
-    const inputNumber = prop<number>()
-    const inputString = prop("2")
-
-    inputNumber.value = 1
-
-    const x = await all({
-      numberFn,
-      stringFn,
-      otherFn: each({ numberFn, stringFn }),
-    })({
-      numberFn: { inputNumber },
-      stringFn: { inputString },
-      otherFn: {
-        numberFn: { inputNumber },
-        stringFn: { inputString },
-      },
-    })
-
-    expect(x.numberFn.outputNumber).toBe(1)
-    expect(x.stringFn.outputString).toBe("2")
-    expect(x.otherFn.numberFn.outputNumber).toBe(1)
-    expect(x.otherFn.stringFn.outputString).toBe("2")
+    // drumroll please...
+    expect(num4.value).toBe(10)
   })
 })

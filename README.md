@@ -6,203 +6,140 @@ TypeScript control flow library
 npm install typectl
 ```
 
-## All
+## Goals
 
-The `all` function builds a "caller" function that executes a group of functions in parallel:
+1. Define complex control flows from a collection of generic functions using a type-safe API.
+2. Give the end user full control over control flow input and output mapping at runtime.
+3. Self-optimize asynchronous code based on the dynamic resolution of inputs and outputs.
+
+## Function API
+
+The `typectl` pattern promotes keeping functions isolated and generic.
+
+If provided, inputs and outputs should be represented by a single object:
 
 ```typescript
-import { all } from "typectl"
+// incrementNumber.ts
+//
+export default ({
+  num,
+  increment,
+}: {
+  num: number
+  increment: number
+}) => {
+  return { num: num + increment }
+}
+```
 
-// sync or async functions ✅
-const a = async ({ arg }: { arg: number }) => arg
-const b = ({ arg }: { arg: boolean }) => arg
+Functions may also be async or have undefined input/output:
+
+```typescript
+export default async () => {}
+```
+
+## Concurrency
+
+Let's run a function twice (concurrently) using `typectl`:
+
+```typescript
+import { all, prop } from "typectl"
+import incrementNumber from "./incrementNumber"
 
 // build caller function
-const caller = all({ a, b })
-```
-
-Calling the function control flow preserves type safety of arguments and return values:
-
-```typescript
-const out = await caller({
-  a: { arg: 1 }, // argument type safety ✅
-  b: { arg: true },
+const caller = all({
+  incrementNumberBy1: incrementNumber,
+  incrementNumberBy2: incrementNumber,
 })
 
-expect(out.a).toBe(1) // return type safety ✅
-expect(out.b).toBe(true)
-```
+// create prop (see next section)
+const num = prop<number>()
 
-## Each
-
-The `each` function has the same signature as `all`, but function groups execute sequentially:
-
-```typescript
-import { each } from "typectl"
-
-const a = ({ arg }: { arg: number }) => arg
-const b = ({ arg }: { arg: boolean }) => arg
-
-const caller = each({ a, b })
-```
-
-## Any
-
-The `any` function has the same signature as `all`, but function group arguments are optional. If an argument is undefined, the respective function is not executed.
-
-```typescript
-import { any } from "typectl"
-
-const a = ({ arg }: { arg: number }) => arg
-const b = ({ arg }: { arg: boolean }) => arg
-
-const caller = any({ a, b })
-
-const out = await caller({
-  a: { arg: 1 },
-  // b argument undefined, not called
+// call functions
+await caller({
+  // define input & output mappings
+  incrementNumberBy1: [
+    { num: 0, increment: 1 },
+    { num },
+  ],
+  incrementNumberBy2: [{ num, increment: 2 }, { num }],
 })
 
-expect(out.a).toBe(1)
-expect(out.b).toBe(undefined)
-```
-
-## Nested control flow
-
-Nest `all`, `each`, or `any` functions to create complex control flows:
-
-```typescript
-import { any, each } from "typectl"
-
-const a = async ({ arg }: { arg: number }) => arg
-const b = ({ arg }: { arg: boolean }) => arg
-const c = async ({ arg }: { arg: string }) => arg
-const d = ({ arg }: { arg: null }) => arg
-
-const caller = all({ a, b, cd: each({ c, d }) })
-
-const out = await caller({
-  a: { arg: 1 }, // argument type safety ✅
-  b: { arg: true },
-  cd: { c: { arg: "c" }, d: { arg: null } },
-})
-
-expect(out.a).toBe(1) // return type safety ✅
-expect(out.b).toBe(true)
-expect(out.cd).toEqual({
-  c: "c",
-  d: null,
-})
+// drumroll please...
+expect(num.value).toBe(3)
 ```
 
 ## Props
 
-Props allow the end user to specify an async input without changing the signature of the control flow function's arguments.
+Props are getter-setters that you can `await` for value assignment. Control flow functions that depend on a prop as input will automatically wait for the prop to receive a value before executing.
 
-### Getter-setter
+Props are optional when providing input mappings, but output mappings must always use props.
 
-Props are awaitable getter-setters:
+## Caller builder functions
 
-```typescript
-import { prop } from "typectl"
+In addition to the `all` caller builder function, there is also `each` and `any`.
 
-const arg = prop<number>()
+The `each` caller builder will execute functions in succession.
 
-setTimeout(() => (arg.value = 1), 10)
-expect(await arg.promise).toBe(1)
-expect(arg.value).toBe(1)
+The `any` caller builder will only run a control flow function if an input or output mapping is provided.
 
-arg.value = 2
-expect(arg.value).toBe(2)
-expect(await arg.promise).toBe(2)
-```
+### Caller builder chains
 
-### Prop resolution
-
-When a caller function receives a prop as input, the control flow function receives the prop value:
+Nest `all`, `each`, or `any` functions to create complex control flows:
 
 ```typescript
-import { all, prop } from "typectl"
+import { all, each, any, prop } from "typectl"
+import incrementNumber from "./incrementNumber"
 
-// simple input type ✅
-const a = ({ arg }: { arg: number }) => arg
-
-const caller = all({ a })
-
-const out = await caller({
-  a: {
-    arg: prop(1), // arg: number | Prop<number>
-  },
+// build caller function
+const caller = all({
+  incrementNumberBy1: incrementNumber,
+  incrementNumbersInSuccession: each({
+    incrementNumberBy2: incrementNumber,
+    incrementNumberBy3: incrementNumber,
+    incrementAnyNumber: any({
+      incrementNumberBy4: incrementNumber,
+      incrementNumberBy5: incrementNumber,
+    }),
+  }),
 })
 
-expect(out.a).toBe(1)
-```
+// create prop
+const num = prop<number>()
+const num2 = prop<number>()
+const num3 = prop<number>()
+const num4 = prop<number>()
 
-#### Async prop resolution
-
-Control flow functions do not execute until their input props resolve:
-
-```typescript
-import { all, prop } from "typectl"
-
-// simple input type ✅
-const a = ({ arg }: { arg: number }) => arg
-
-const caller = all({ a })
-
-// async prop ✅
-const arg = prop<number>()
-setTimeout(() => (arg.value = 1), 10)
-
-// `a` not called until prop resolves
-const out = await caller({ a: { arg } })
-
-expect(out.a).toBe(1)
-```
-
-### Bypass prop resolution
-
-Add `Prop` to the end of the input name to bypass prop value resolution:
-
-```typescript
-const a = ({ argProp }: { argProp: Prop<number> }) =>
-  (argProp.value = 1)
-
-const caller = all({ a })
-const argProp = prop<number>()
-
-const out = await caller({
-  a: { argProp }, // input ending with `Prop` bypasses prop resolution
+// call functions
+await caller({
+  // define input & output mappings
+  incrementNumberBy1: [
+    { num: 0, increment: 1 },
+    { num },
+  ],
+  incrementNumbersInSuccession: [
+    {
+      incrementNumberBy2: [
+        { num, increment: 2 },
+        { num: num2 },
+      ],
+      incrementNumberBy3: [
+        { num: num2, increment: 3 },
+        { num: num3 },
+      ],
+      incrementAnyNumber: [
+        {
+          incrementNumberBy4: [
+            { num: num3, increment: 4 },
+            { num: num4 },
+          ],
+          incrementNumberBy5: false,
+        },
+      ],
+    },
+  ],
 })
 
-expect(argProp.value).toBe(1)
-expect(out.a).toBe(1)
+// drumroll please...
+expect(num4.value).toBe(10)
 ```
-
-### Built-in optimization
-
-By utilizing props, we can add functions to the control flow that populate the input of other functions:
-
-```typescript
-// get arg
-const a = ({ arg }: { arg: number }) => arg
-
-// set arg
-const b = ({ argProp }: { argProp: Prop<number> }) =>
-  setTimeout(() => (argProp.value = 1), 10)
-
-const caller = all({ a, b })
-const arg = prop<number>()
-
-const out = await caller({
-  a: { arg },
-  b: { argProp: arg },
-})
-
-expect(out.a).toBe(1)
-expect(arg.value).toBe(1)
-```
-
-Using this technique, optimal async control flow is built-in, and remains optimized as the control flow becomes more complex.
-
-Functions can now be small, simple, and isolated while remaining flexible to end-user composition.

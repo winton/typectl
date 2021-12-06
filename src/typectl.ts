@@ -1,11 +1,38 @@
-import { RecordType, RecordOutType, InType } from "io-type"
+import { RecordType, InType, OutType } from "io-type"
 
-export type PropRecordType<Obj extends RecordType> = {
-  [P in keyof Obj]: Obj[P] | Prop<Obj[P]>
+export type InputOutputMapType<Obj extends RecordType> = {
+  [P in keyof Obj]:
+    | [
+        OptionalPropRecordType<InType<Obj[P]>>,
+        PropRecordType<OutType<Obj[P]>>
+      ]
+    | [OptionalPropRecordType<InType<Obj[P]>>]
 }
 
-export type PropRecordInType<Obj extends RecordType> = {
-  [P in keyof Obj]: PropRecordType<InType<Obj[P]>>
+export type InputOutputMapAnyType<Obj extends RecordType> =
+  {
+    [P in keyof Obj]:
+      | [
+          OptionalPropRecordType<InType<Obj[P]>>,
+          PropRecordType<OutType<Obj[P]>>
+        ]
+      | [OptionalPropRecordType<InType<Obj[P]>>]
+      | false
+  }
+
+export type PropRecordType<Obj extends RecordType> = {
+  [P in keyof Obj]: Prop<Obj[P]>
+}
+
+export type OptionalPropRecordType<Obj extends RecordType> =
+  {
+    [P in keyof Obj]: Obj[P] | Prop<Obj[P]>
+  }
+
+export type PartialOptionalPropRecordType<
+  Obj extends RecordType
+> = {
+  [P in keyof Obj]?: Obj[P] | Prop<Obj[P]>
 }
 
 export async function propInput(
@@ -33,62 +60,69 @@ export async function propInput(
   return out
 }
 
+export async function propOutput(
+  output: Record<string | number | symbol, any>,
+  outputMap: Record<string | number | symbol, any>
+) {
+  for (const key in outputMap) {
+    if (outputMap[key] instanceof Prop) {
+      if (output[key] instanceof Prop) {
+        outputMap[key].value = await output[key]
+      } else {
+        outputMap[key].value = output[key]
+      }
+    }
+  }
+}
+
 export function all<Obj extends RecordType>(obj: Obj) {
   return async (
-    input: PropRecordInType<Obj>
-  ): Promise<RecordOutType<Obj>> => {
-    const outputs: any = {}
+    input: InputOutputMapType<Obj>
+  ): Promise<void> => {
     const promises = []
 
     for (const key in obj) {
       promises.push(
         (async () =>
-          (outputs[key] = obj[key](
-            await propInput(input[key])
-          )))()
+          await propOutput(
+            await obj[key](await propInput(input[key][0])),
+            input[key][1]
+          ))()
       )
     }
 
     await Promise.all(promises)
-
-    for (const key in outputs) {
-      outputs[key] = await outputs[key]
-    }
-
-    return outputs
   }
 }
 
 export function any<Obj extends RecordType>(obj: Obj) {
   return async (
-    input: Partial<PropRecordInType<Obj>>
-  ): Promise<Partial<RecordOutType<Obj>>> => {
+    input: InputOutputMapAnyType<Obj>
+  ): Promise<void> => {
     const objs: any = {}
 
     for (const key in obj) {
-      if (input[key] !== undefined) {
+      if (input[key]) {
         objs[key] = obj[key]
       }
     }
 
-    return await all(objs)(input)
+    return await all(objs)(input as InputOutputMapType<Obj>)
   }
 }
 
 export function each<Obj extends RecordType>(obj: Obj) {
   return async (
-    input: PropRecordInType<Obj>
-  ): Promise<RecordOutType<Obj>> => {
-    const outputs: any = {}
+    input: InputOutputMapType<Obj>
+  ): Promise<void> => {
     const keys = Object.keys(obj)
 
     for (const key of keys) {
-      outputs[key] = await obj[key](
-        await propInput(input[key])
+      await propOutput(
+        await obj[key](await propInput(input[key][0])),
+        input[key][1]
       )
     }
-
-    return outputs
   }
 }
 
