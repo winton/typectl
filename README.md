@@ -79,9 +79,9 @@ In addition to the `all` builder function, there is also `each` and `any`:
 
 | Function | Description |
 | --- | --- |
-| `all` | concurrent execution |
-| `each` | serial execution |
-| `any` | concurrent execution (if called with input or output mapping) |
+| `all` | Concurrent execution |
+| `each` | Serial execution |
+| `any` | Concurrent execution (if input or output mapping provided) |
 
 ### Control flow builder chains
 
