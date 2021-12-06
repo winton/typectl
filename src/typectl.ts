@@ -132,13 +132,15 @@ export class Prop<T> {
   _resolve: (value: T | PromiseLike<T>) => void
   _state: T
   constructor(value?: T) {
-    this._promise =
-      value !== undefined
-        ? Promise.resolve(value)
-        : new Promise<T>(
-            (resolve) => (this._resolve = resolve)
-          )
-    this._state = value
+    if (value === undefined) {
+      this._promise = new Promise<T>(
+        (resolve) => (this._resolve = resolve)
+      )
+    } else {
+      this._promise = Promise.resolve(value)
+      this._state = value
+      Object.freeze(this)
+    }
   }
   get promise() {
     return this._promise
@@ -147,13 +149,12 @@ export class Prop<T> {
     return this._state
   }
   set value(value: T) {
-    if (this._state !== undefined) {
-      throw new Error(
-        "Prop cannot receive a value more than once."
-      )
+    if (this._state) {
+      throw new Error("Props cannot be reassigned.")
     }
     this._state = value
     this._resolve(value)
+    Object.freeze(this)
   }
   toJSON() {
     return this._state

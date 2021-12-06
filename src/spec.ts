@@ -40,7 +40,7 @@ describe("typectl", () => {
     expect(finalNum.value).toBe(3)
   })
 
-  it("only set props once", async () => {
+  it("freezes props", async () => {
     const hello = prop("hello")
 
     expect(() => {
