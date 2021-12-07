@@ -111,7 +111,7 @@ Output mappings are optional, but when provided, **must** use props so they can 
 
 ## Builder functions
 
-In addition to the `all` builder function, there are also `any` and `each`:
+In addition to the `all` builder function, there are also `each`, `any`, and `anyEach`:
 
 | Function | Description |
 | --- | --- |
