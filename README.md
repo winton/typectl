@@ -12,9 +12,9 @@ npm install typectl
 2. Implement an input/output mapping abstraction that enables a similarly typed, but awaitable, getter/setter to be passed in place of the type requested by the function.
 3. Because all functions execute at once but wait on specific inputs before executing, the pattern should automatically produce optimized control flows that scale with complexity.
 
-## Function API
+## Pure function API
 
-The only API requirement for control flow functions is that arguments and return values are specified as single objects:
+Specify arguments and return values as single objects:
 
 ```typescript
 // incrementNumber.ts
@@ -30,7 +30,7 @@ export default ({
 }
 ```
 
-Functions may be asynchronous and arguments/return values are not required (this is a valid function):
+Functions may be asynchronous and omit input/output (this is a valid function):
 
 ```typescript
 export default async () => {}
@@ -91,7 +91,7 @@ hi.value = "hi" // success!
 
 ### Props are awaitable
 
-Wait for a prop to populate by using the `promise` attribute:
+Use the `promise` attribute to wait for a prop to populate:
 
 ```typescript
 import { prop } from "typectl"
@@ -103,7 +103,7 @@ expect(await hello.promise).toBe("hello")
 
 ### Input/output mappings
 
-When executing a control flow, input mappings may receive the prop version of the requested input type. If the prop is not assigned, the function does not execute until it becomes available.
+When executing a control flow, input mappings may receive the prop version of the requested input type. If the prop is not assigned, the dependent function does not execute until it becomes available.
 
 Because control flow functions wait for prop input resolution, you can usually write the most optimal code by throwing all of your functions in a single `all` and allow the caller to reason about execution order based on its desired inputs.
 
@@ -116,8 +116,9 @@ In addition to the `all` builder function, there are also `any` and `each`:
 | Function | Description |
 | --- | --- |
 | `all` | Concurrent execution of *all* functions |
-| `any` | Concurrent execution of *any* functions with input maps |
-| `each` | Serial execution of *all* functions |
+| `each` | Serial execution of *each* function |
+| `any` | Concurrent execution of *any* functions where input maps provided |
+| `anyEach` | Serial execution of *each* function where input maps provided |
 
 ### Nested builders
 
