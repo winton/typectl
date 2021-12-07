@@ -103,7 +103,7 @@ expect(await hello.promise).toBe("hello")
 
 ### Input/output mappings
 
-When executing a control flow, input mappings may receive the prop version of the requested input type. If the prop is not assigned, the dependent function does not execute until it becomes available.
+When executing a control flow, input mappings may optionally receive the prop version of the input type. If the prop is unassigned, the dependent function will not execute until it becomes available.
 
 Because control flow functions wait for prop input resolution, you can usually write the most optimal code by throwing all of your functions in a single `all` and allow the caller to reason about execution order based on its desired inputs.
 
