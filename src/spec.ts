@@ -112,6 +112,9 @@ describe("typectl", () => {
     })
 
     // drumroll please...
+    expect(num.value).toBe(1)
+    expect(num2.value).toBe(3)
+    expect(num3.value).toBe(6)
     expect(num4.value).toBe(10)
   })
 })

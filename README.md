@@ -149,7 +149,6 @@ const num4 = prop<number>()
 
 // call control flow
 await caller({
-  // input & output mappings
   incrementNumberBy1: [
     { num: 0, increment: 1 },
     { num },
@@ -179,5 +178,8 @@ await caller({
 })
 
 // drumroll please...
+expect(num.value).toBe(1)
+expect(num2.value).toBe(3)
+expect(num3.value).toBe(6)
 expect(num4.value).toBe(10)
 ```
