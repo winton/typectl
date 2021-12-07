@@ -14,30 +14,34 @@ const incrementNumber = ({
 describe("typectl", () => {
   it("your first control flow", async () => {
     // control flow builder
-    const caller = all({
+    const increment = all({
       incrementNumberBy1: incrementNumber,
       incrementNumberBy2: incrementNumber,
     })
 
     // create props (see next section)
-    const firstNum = prop<number>()
-    const finalNum = prop<number>()
+    const num1 = prop<number>()
+    const num2 = prop<number>()
 
-    // call control flow
-    await caller({
-      // input & output mappings
+    // execute control flow
+    await increment({
       incrementNumberBy1: [
+        // argument mapping
         { num: 0, increment: 1 },
-        { num: firstNum },
+        // return mapping
+        { num: num1 },
       ],
       incrementNumberBy2: [
-        { num: firstNum, increment: 2 },
-        { num: finalNum },
+        // argument mapping
+        { num: num1, increment: 2 },
+        // return mapping
+        { num: num2 },
       ],
     })
 
     // drumroll please...
-    expect(finalNum.value).toBe(3)
+    expect(num1.value).toBe(1)
+    expect(num2.value).toBe(3)
   })
 
   it("freezes props", async () => {

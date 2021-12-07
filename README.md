@@ -8,9 +8,9 @@ npm install typectl
 
 ## Goals
 
-1. Execute complex control flows of pure functions (functions that are isolated, simply typed, and reusable) using an expressive, type-safe API.
-2. Mappings between function inputs and outputs should be configurable at runtime.
-3. The pattern should produce optimized control flows that scale with complexity.
+1. Dynamically execute groups of pure functions using a type-safe API.
+2. Implement an input/output mapping abstraction that enables a similarly typed, but awaitable, getter/setter to be passed in place of the type requested by the function.
+3. Because all functions execute at once but wait on specific inputs before executing, the pattern should automatically produce optimized control flows that scale with complexity.
 
 ## Function API
 
@@ -38,42 +38,46 @@ export default async () => {}
 
 ## Your first control flow
 
-Let's run the `incrementNumber` function concurrently using `typectl`:
+Let's run the `incrementNumber` function concurrently using the `all` builder:
 
 ```typescript
 import { all, prop } from "typectl"
 import incrementNumber from "./incrementNumber"
 
 // control flow builder
-const caller = all({
+const increment = all({
   incrementNumberBy1: incrementNumber,
   incrementNumberBy2: incrementNumber,
 })
 
 // create props (see next section)
-const firstNum = prop<number>()
-const finalNum = prop<number>()
+const num1 = prop<number>()
+const num2 = prop<number>()
 
-// call control flow
-await caller({
-  // input & output mappings
+// execute control flow
+await increment({
   incrementNumberBy1: [
+    // argument mapping
     { num: 0, increment: 1 },
-    { num: firstNum },
+    // return mapping
+    { num: num1 },
   ],
   incrementNumberBy2: [
-    { num: firstNum, increment: 2 },
-    { num: finalNum },
+    // argument mapping
+    { num: num1, increment: 2 },
+    // return mapping
+    { num: num2 },
   ],
 })
 
 // drumroll please...
-expect(finalNum.value).toBe(3)
+expect(num1.value).toBe(1)
+expect(num2.value).toBe(3)
 ```
 
 ## Props
 
-Props are getter-setters that can only be set once:
+Props are getter-setters that can only be set once (immutable):
 
 ```typescript
 import { prop } from "typectl"
@@ -85,7 +89,7 @@ const hi = prop()
 hi.value = "hi" // success!
 ```
 
-### Await prop assignment
+### Props are awaitable
 
 Wait for a prop to populate by using the `promise` attribute:
 
@@ -97,15 +101,15 @@ setTimeout(() => (hello.value = "hello"), 10)
 expect(await hello.promise).toBe("hello")
 ```
 
-### Props in variable mappings
+### Input/output mappings
 
-When calling a control flow, input mappings may contain either the original function input types or the prop version of the input types. If the prop version is provided unassigned, the caller waits for it to become available before executing its dependent function.
+When executing a control flow, input mappings may receive the prop version of the requested input type. If the prop is not assigned, the function does not execute until it becomes available.
 
-Because control flow functions wait for prop input resolution, you can usually write the most optimal code by throwing all of your functions in a single `all` and allow the caller to reason about execution order based on its inputs.
+Because control flow functions wait for prop input resolution, you can usually write the most optimal code by throwing all of your functions in a single `all` and allow the caller to reason about execution order based on its desired inputs.
 
-Output mappings are optional, but when provided, **must** use the prop version of the original output type.
+Output mappings are optional, but when provided, **must** use props so they can be assigned a value.
 
-## Control flow builder functions
+## Builder functions
 
 In addition to the `all` builder function, there are also `any` and `each`:
 
@@ -115,7 +119,7 @@ In addition to the `all` builder function, there are also `any` and `each`:
 | `any` | Concurrent execution of *any* functions with input maps |
 | `each` | Serial execution of *all* functions |
 
-### Nested control flow builders
+### Nested builders
 
 Nest builder functions to create complex control flows:
 
