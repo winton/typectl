@@ -127,6 +127,23 @@ export function each<Obj extends RecordType>(obj: Obj) {
   }
 }
 
+export function anyEach<Obj extends RecordType>(obj: Obj) {
+  return async (
+    input: InputOutputMapType<Obj>
+  ): Promise<void> => {
+    const keys = Object.keys(obj)
+
+    for (const key of keys) {
+      if (input[key]) {
+        propOutput(
+          await obj[key](await propInput(input[key][0])),
+          input[key][1]
+        )
+      }
+    }
+  }
+}
+
 export class Prop<T> {
   _promise: Promise<T>
   _resolve: (value: T | PromiseLike<T>) => void
