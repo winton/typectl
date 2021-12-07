@@ -65,10 +65,10 @@ describe("typectl", () => {
     // nested control flow builders
     const caller = all({
       incrementNumberBy1: incrementNumber,
-      incrementNumbersInSuccession: each({
+      incrementNumberEach: each({
         incrementNumberBy2: incrementNumber,
         incrementNumberBy3: incrementNumber,
-        incrementAnyNumber: any({
+        incrementNumberAny: any({
           incrementNumberBy4: incrementNumber,
           incrementNumberBy5: incrementNumber,
         }),
@@ -88,7 +88,7 @@ describe("typectl", () => {
         { num: 0, increment: 1 },
         { num },
       ],
-      incrementNumbersInSuccession: [
+      incrementNumberEach: [
         {
           incrementNumberBy2: [
             { num, increment: 2 },
@@ -98,7 +98,7 @@ describe("typectl", () => {
             { num: num2, increment: 3 },
             { num: num3 },
           ],
-          incrementAnyNumber: [
+          incrementNumberAny: [
             {
               incrementNumberBy4: [
                 { num: num3, increment: 4 },
