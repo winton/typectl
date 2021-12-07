@@ -14,7 +14,7 @@ npm install typectl
 
 ## Function API
 
-The function API requires defining arguments and return values as objects:
+The only API requirement for control flow functions is that arguments and return values are specified as single objects:
 
 ```typescript
 // incrementNumber.ts
@@ -30,7 +30,7 @@ export default ({
 }
 ```
 
-Functions may be async or without inputs/outputs. For example, this function is valid:
+Functions may be asynchronous and arguments/return values are not required (this is a valid function):
 
 ```typescript
 export default async () => {}
