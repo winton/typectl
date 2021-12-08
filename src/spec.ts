@@ -63,7 +63,7 @@ describe("typectl", () => {
 
   it("control flow builder chains", async () => {
     // nested control flow builders
-    const caller = all({
+    const increment = all({
       incrementNumberBy1: incrementNumber,
       incrementNumberEach: each({
         incrementNumberBy2: incrementNumber,
@@ -82,7 +82,7 @@ describe("typectl", () => {
     const num4 = prop<number>()
 
     // call control flow
-    await caller({
+    await increment({
       // input & output mappings
       incrementNumberBy1: [
         { num: 0, increment: 1 },

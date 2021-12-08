@@ -111,13 +111,13 @@ Output mappings are optional, but when provided, **must** use props so they can 
 
 ## Builder functions
 
-In addition to the `all` builder function, there are also `each`, `any`, and `anyEach`:
+In addition to the `all` builder function, there are also `any`, `each`, and `anyEach`:
 
 | Function | Description |
 | --- | --- |
 | `all` | Concurrent execution of *all* functions |
-| `each` | Serial execution of *each* function |
 | `any` | Concurrent execution of *any* functions where input maps provided |
+| `each` | Serial execution of *each* function |
 | `anyEach` | Serial execution of *each* function where input maps provided |
 
 ### Nested builders
@@ -129,7 +129,7 @@ import { all, each, any, prop } from "typectl"
 import incrementNumber from "./incrementNumber"
 
 // nested control flow builders
-const caller = all({
+const increment = all({
   incrementNumberBy1: incrementNumber,
   incrementNumberEach: each({
     incrementNumberBy2: incrementNumber,
@@ -148,7 +148,7 @@ const num3 = prop<number>()
 const num4 = prop<number>()
 
 // call control flow
-await caller({
+await increment({
   incrementNumberBy1: [
     { num: 0, increment: 1 },
     { num },
