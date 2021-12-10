@@ -10,7 +10,7 @@ npm install typectl
 
 1. Dynamically execute groups of pure functions using a type-safe API.
 2. Implement an input/output mapping abstraction that enables a similarly typed, but awaitable, getter/setter to be passed in place of the type requested by the function.
-3. Because all functions execute at once but wait on specific inputs before executing, the pattern should automatically produce optimized control flows that scale with complexity.
+3. Because all functions execute at once but may wait on dependent inputs before executing, the pattern should automatically produce optimized control flows that scale with complexity.
 
 ## Pure function API
 
