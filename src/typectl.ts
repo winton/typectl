@@ -7,6 +7,7 @@ export type InputOutputMapType<Obj extends RecordType> = {
         PropRecordType<OutType<Obj[P]>>
       ]
     | [OptionalPropRecordType<InType<Obj[P]>>]
+    | []
 }
 
 export type InputOutputMapAnyType<Obj extends RecordType> =
@@ -17,6 +18,7 @@ export type InputOutputMapAnyType<Obj extends RecordType> =
           PropRecordType<OutType<Obj[P]>>
         ]
       | [OptionalPropRecordType<InType<Obj[P]>>]
+      | []
   }
 
 export type PropRecordType<Obj extends RecordType> = {
@@ -37,6 +39,10 @@ export type PartialOptionalPropRecordType<
 export async function propInput(
   input: Record<string | number | symbol, any>
 ) {
+  if (!input) {
+    return
+  }
+
   const out = {}
   const promises = []
 
