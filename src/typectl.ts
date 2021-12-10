@@ -21,7 +21,7 @@ export type InputOutputMapAnyType<Obj extends RecordType> =
   }
 
 export type PropRecordType<Obj extends RecordType> = {
-  [P in keyof Obj]: Prop<Obj[P]>
+  [P in keyof Obj]?: Prop<Obj[P]>
 }
 
 export type OptionalPropRecordType<Obj extends RecordType> =
