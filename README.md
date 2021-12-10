@@ -169,7 +169,7 @@ await increment({
             { num: num3, increment: 4 },
             { num: num4 },
           ],
-          // don't run incrementNumberBy5
+          // don't run (any)
           incrementNumberBy5: undefined,
         },
       ],
