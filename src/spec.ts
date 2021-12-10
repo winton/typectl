@@ -12,7 +12,7 @@ const incrementNumber = ({
 }
 
 describe("typectl", () => {
-  it("your first control flow", async () => {
+  it("runs functions (all)", async () => {
     // control flow builder
     const increment = all({
       incrementNumberBy1: incrementNumber,
@@ -61,7 +61,7 @@ describe("typectl", () => {
     expect(await hello.promise).toBe("hello")
   })
 
-  it("control flow builder chains", async () => {
+  it("nests builders", async () => {
     // nested control flow builders
     const increment = all({
       incrementNumberBy1: incrementNumber,
@@ -116,5 +116,30 @@ describe("typectl", () => {
     expect(num2.value).toBe(3)
     expect(num3.value).toBe(6)
     expect(num4.value).toBe(10)
+  })
+
+  it("breaks", async () => {
+    // control flow builder
+    const caller = each({
+      first: () => ({ num: 1 }),
+      second: () => ({ break: true }),
+      third: () => ({ num: 2 }),
+    })
+
+    // create props
+    const num1 = prop<number>()
+    const num2 = prop<number>()
+
+    // execute control flow
+    const out = await caller({
+      first: [{}, { num: num1 }],
+      second: [{}],
+      third: [{}, { num: num2 }],
+    })
+
+    // drumroll please...
+    expect(out).toEqual({ break: true })
+    expect(num1.value).toBe(1)
+    expect(num2.value).toBe(undefined)
   })
 })

@@ -62,8 +62,12 @@ export async function propInput(
 
 export function propOutput(
   output: Record<string | number | symbol, any>,
-  outputMap: Record<string | number | symbol, any>
+  outputMap: Record<string | number | symbol, any>,
+  signal: { break: any }
 ) {
+  if (output.break) {
+    signal.break = output.break
+  }
   for (const key in outputMap) {
     if (outputMap[key] instanceof Prop) {
       if (output[key] instanceof Prop) {
@@ -79,27 +83,36 @@ export function propOutput(
 export function all<Obj extends RecordType>(obj: Obj) {
   return async (
     input: InputOutputMapType<Obj>
-  ): Promise<void> => {
+  ): Promise<{ break: any }> => {
+    const signal = { break: undefined }
     const promises = []
 
     for (const key in obj) {
       promises.push(
-        (async () =>
+        (async () => {
           propOutput(
-            await obj[key](await propInput(input[key][0])),
-            input[key][1]
-          ))()
+            signal.break === undefined
+              ? await obj[key](
+                  await propInput(input[key][0])
+                )
+              : {},
+            input[key][1],
+            signal
+          )
+        })()
       )
     }
 
     await Promise.all(promises)
+
+    return signal
   }
 }
 
 export function any<Obj extends RecordType>(obj: Obj) {
   return async (
     input: InputOutputMapAnyType<Obj>
-  ): Promise<void> => {
+  ): Promise<{ break: any }> => {
     const objs: any = {}
 
     for (const key in obj) {
@@ -115,32 +128,44 @@ export function any<Obj extends RecordType>(obj: Obj) {
 export function each<Obj extends RecordType>(obj: Obj) {
   return async (
     input: InputOutputMapType<Obj>
-  ): Promise<void> => {
+  ): Promise<{ break: any }> => {
+    const signal = { break: undefined }
     const keys = Object.keys(obj)
 
     for (const key of keys) {
       propOutput(
-        await obj[key](await propInput(input[key][0])),
-        input[key][1]
+        signal.break === undefined
+          ? await obj[key](await propInput(input[key][0]))
+          : {},
+        input[key][1],
+        signal
       )
     }
+
+    return signal
   }
 }
 
 export function anyEach<Obj extends RecordType>(obj: Obj) {
   return async (
     input: InputOutputMapType<Obj>
-  ): Promise<void> => {
+  ): Promise<{ break: any }> => {
+    const signal = { break: undefined }
     const keys = Object.keys(obj)
 
     for (const key of keys) {
       if (input[key]) {
         propOutput(
-          await obj[key](await propInput(input[key][0])),
-          input[key][1]
+          signal.break === undefined
+            ? await obj[key](await propInput(input[key][0]))
+            : {},
+          input[key][1],
+          signal
         )
       }
     }
+
+    return signal
   }
 }
 

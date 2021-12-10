@@ -89,7 +89,7 @@ const hi = prop()
 hi.value = "hi" // success!
 ```
 
-### Props are awaitable
+### Await props
 
 Use the `promise` attribute to wait for a prop to populate:
 
@@ -182,4 +182,46 @@ expect(num.value).toBe(1)
 expect(num2.value).toBe(3)
 expect(num3.value).toBe(6)
 expect(num4.value).toBe(10)
+```
+
+## Break the flow
+
+Halt the control flow by returning a truthy value for `break`:
+
+```typescript
+// breaker.ts
+//
+export default () => {
+  return { break: true }
+}
+```
+
+The control flow caller function returns the break value:
+
+```typescript
+import { all, prop } from "typectl"
+import breaker from "./breaker"
+
+// control flow builder
+const caller = all({
+  first: () => ({ num1: 1 }),
+  second: breaker,
+  third: () => ({ num2: 2 })
+})
+
+// create props
+const num1 = prop<number>()
+const num2 = prop<number>()
+
+// execute control flow
+const out = await caller({
+  first: [{}, { num: num1 }],
+  second: [{}],
+  third: [{}, { num: num2 }],
+})
+
+// drumroll please...
+expect(out).toEqual({ break: true })
+expect(first.value).toBe(1)
+expect(second.value).toBe(undefined)
 ```
