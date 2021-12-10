@@ -105,7 +105,7 @@ expect(await hello.promise).toBe("hello")
 
 When executing a control flow, input mappings may optionally receive the prop version of the input type. The dependent function waits to execute until after the prop initializes.
 
-Because control flow functions wait for prop input resolution, you can usually write the most optimal code by throwing all of your functions in a single `all` and allow the caller to reason about execution order based on its desired inputs.
+Because the caller can reason about execution order based on the initialization of inputs, asynchronous functions within a single `all` produce naturally optimal concurrency without much thought.
 
 Output mappings are optional, but when provided, **must** use props so they can be assigned a value.
 
