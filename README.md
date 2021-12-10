@@ -170,7 +170,7 @@ await increment({
             { num: num4 },
           ],
           // don't run incrementNumberBy5
-          incrementNumberBy5: false,
+          incrementNumberBy5: undefined,
         },
       ],
     },
