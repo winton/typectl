@@ -189,8 +189,6 @@ expect(num4.value).toBe(10)
 Halt the control flow by returning a truthy value for `break`:
 
 ```typescript
-// breaker.ts
-//
 export default () => {
   return { break: true }
 }
@@ -200,7 +198,6 @@ The control flow caller function returns the break value:
 
 ```typescript
 import { all, prop } from "typectl"
-import breaker from "./breaker"
 
 // control flow builder
 const caller = each({
