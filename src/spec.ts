@@ -104,7 +104,7 @@ describe("typectl", () => {
                 { num: num3, increment: 4 },
                 { num: num4 },
               ],
-              incrementNumberBy5: false,
+              incrementNumberBy5: undefined,
             },
           ],
         },

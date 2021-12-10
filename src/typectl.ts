@@ -17,7 +17,6 @@ export type InputOutputMapAnyType<Obj extends RecordType> =
           PropRecordType<OutType<Obj[P]>>
         ]
       | [OptionalPropRecordType<InType<Obj[P]>>]
-      | false
   }
 
 export type PropRecordType<Obj extends RecordType> = {
