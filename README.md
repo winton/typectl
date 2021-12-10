@@ -91,7 +91,7 @@ hi.value = "hi" // success!
 
 ### Await props
 
-Use the `promise` attribute to wait for a prop to populate:
+Use the `promise` attribute to wait for a prop to initialize:
 
 ```typescript
 import { prop } from "typectl"
@@ -103,7 +103,7 @@ expect(await hello.promise).toBe("hello")
 
 ### Input/output mappings
 
-When executing a control flow, input mappings may optionally receive the prop version of the input type. If the prop is unassigned, the dependent function will not execute until it becomes available.
+When executing a control flow, input mappings may optionally receive the prop version of the input type. The dependent function waits to execute until after the prop initializes.
 
 Because control flow functions wait for prop input resolution, you can usually write the most optimal code by throwing all of your functions in a single `all` and allow the caller to reason about execution order based on its desired inputs.
 
