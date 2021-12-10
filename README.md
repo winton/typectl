@@ -203,25 +203,27 @@ import { all, prop } from "typectl"
 import breaker from "./breaker"
 
 // control flow builder
-const caller = all({
-  first: () => ({ num1: 1 }),
-  second: breaker,
-  third: () => ({ num2: 2 })
+const caller = each({
+  first: () => ({ num: 1 }),
+  second: () => ({ num: 2, break: true }),
+  third: () => ({ num: 3 }),
 })
 
 // create props
 const num1 = prop<number>()
 const num2 = prop<number>()
+const num3 = prop<number>()
 
 // execute control flow
 const out = await caller({
   first: [{}, { num: num1 }],
-  second: [{}],
-  third: [{}, { num: num2 }],
+  second: [{}, { num: num2 }],
+  third: [{}, { num: num3 }],
 })
 
 // drumroll please...
 expect(out).toEqual({ break: true })
-expect(first.value).toBe(1)
-expect(second.value).toBe(undefined)
+expect(num1.value).toBe(1)
+expect(num2.value).toBe(2)
+expect(num3.value).toBeUndefined()
 ```
