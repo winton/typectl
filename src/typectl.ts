@@ -70,7 +70,7 @@ export function propOutput(
   outputMap: Record<string | number | symbol, any>,
   signal: { break: any }
 ) {
-  if (output.break) {
+  if (output?.break) {
     signal.break = output.break
   }
   for (const key in outputMap) {
