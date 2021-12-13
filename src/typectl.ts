@@ -196,7 +196,7 @@ export class Prop<T> {
     return this._state
   }
   set value(value: T) {
-    if (this._state !== undefined) {
+    if (Object.isFrozen(this)) {
       throw new Error("Props cannot be reassigned.")
     }
     this._state = value
