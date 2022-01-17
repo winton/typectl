@@ -1,12 +1,13 @@
 import { RecordType, InType, OutType } from "io-type"
+import { Readable } from "stream"
 
 export type InputOutputMapType<Obj extends RecordType> = {
   [P in keyof Obj]:
     | [
-        OptionalPropRecordType<InType<Obj[P]>>,
-        PropRecordType<OutType<Obj[P]>>
+        InputPropRecordType<InType<Obj[P]>>,
+        OutputPropRecordType<OutType<Obj[P]>>
       ]
-    | [OptionalPropRecordType<InType<Obj[P]>>]
+    | [InputPropRecordType<InType<Obj[P]>>]
     | []
 }
 
@@ -14,26 +15,21 @@ export type InputOutputMapAnyType<Obj extends RecordType> =
   {
     [P in keyof Obj]:
       | [
-          OptionalPropRecordType<InType<Obj[P]>>,
-          PropRecordType<OutType<Obj[P]>>
+          InputPropRecordType<InType<Obj[P]>>,
+          OutputPropRecordType<OutType<Obj[P]>>
         ]
-      | [OptionalPropRecordType<InType<Obj[P]>>]
+      | [InputPropRecordType<InType<Obj[P]>>]
       | []
   }
 
-export type PropRecordType<Obj extends RecordType> = {
-  [P in keyof Obj]?: Prop<Obj[P]>
+export type InputPropRecordType<Obj extends RecordType> = {
+  [P in keyof Obj]: Obj[P] extends Array<any>
+    ? Obj[P] | Prop<Obj[P]> | Readable | Prop<Readable>
+    : Obj[P] | Prop<Obj[P]>
 }
 
-export type OptionalPropRecordType<Obj extends RecordType> =
-  {
-    [P in keyof Obj]: Obj[P] | Prop<Obj[P]>
-  }
-
-export type PartialOptionalPropRecordType<
-  Obj extends RecordType
-> = {
-  [P in keyof Obj]?: Obj[P] | Prop<Obj[P]>
+export type OutputPropRecordType<Obj extends RecordType> = {
+  [P in keyof Obj]?: Prop<Obj[P]>
 }
 
 export async function propInput(
