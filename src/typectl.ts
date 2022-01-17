@@ -29,7 +29,11 @@ export type InputPropRecordType<Obj extends RecordType> = {
         string | number | symbol,
         Array<any>
       >
-    ? Obj[P] | Prop<Obj[P]> | Readable | Prop<Readable>
+    ?
+        | Obj[P]
+        | Prop<Obj[P]>
+        | Record<string | number | symbol, Readable>
+        | Prop<Record<string | number | symbol, Readable>>
     : Obj[P] | Prop<Obj[P]>
 }
 
