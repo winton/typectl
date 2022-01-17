@@ -25,6 +25,11 @@ export type InputOutputMapAnyType<Obj extends RecordType> =
 export type InputPropRecordType<Obj extends RecordType> = {
   [P in keyof Obj]: Obj[P] extends Array<any>
     ? Obj[P] | Prop<Obj[P]> | Readable | Prop<Readable>
+    : Obj[P] extends Record<
+        string | number | symbol,
+        Array<any>
+      >
+    ? Obj[P] | Prop<Obj[P]> | Readable | Prop<Readable>
     : Obj[P] | Prop<Obj[P]>
 }
 
