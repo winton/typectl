@@ -1,181 +1,185 @@
-import { RecordType, InType, OutType } from "io-type"
-import { Readable } from "stream"
+import { InType, OutType, RecordType } from "io-type"
+import { ReadableStream } from "web-streams-polyfill/ponyfill"
 
-export type InputOutputMapType<Obj extends RecordType> = {
-  [P in keyof Obj]:
-    | [
-        InputPropRecordType<InType<Obj[P]>>,
-        OutputPropRecordType<OutType<Obj[P]>>
-      ]
-    | [InputPropRecordType<InType<Obj[P]>>]
-    | []
-}
+export type RecordKeyType = string | number | symbol
 
-export type InputOutputMapAnyType<Obj extends RecordType> =
-  {
-    [P in keyof Obj]:
-      | [
-          InputPropRecordType<InType<Obj[P]>>,
-          OutputPropRecordType<OutType<Obj[P]>>
-        ]
-      | [InputPropRecordType<InType<Obj[P]>>]
-      | []
-  }
+export type IterableType =
+  | Record<string, any>
+  | any[]
+  | ReadableStream
+
+export type IterableValueType<T> = T extends Record<
+  RecordKeyType,
+  infer V
+>
+  ? V
+  : T extends (infer V)[]
+  ? V
+  : T extends ReadableStream<infer V>
+  ? V
+  : any
+
+export type PropValueType<T> = T extends Prop<infer U>
+  ? U
+  : T
+
+export type ImportFunctionType = PromiseLike<{
+  default: (...any: any[]) => any
+}>
+
+export type ImportType<T> = T extends PromiseLike<infer A>
+  ? A
+  : never
+
+export type ImportInType<T extends ImportFunctionType> =
+  InType<ImportType<T>["default"]>
+
+export type ImportOutType<T extends ImportFunctionType> =
+  OutType<ImportType<T>["default"]>
 
 export type InputPropRecordType<Obj extends RecordType> = {
-  [P in keyof Obj]: Obj[P] extends Array<any>
-    ? Obj[P] | Prop<Obj[P]> | Readable | Prop<Readable>
-    : Obj[P] extends Record<
-        string | number | symbol,
-        Array<any>
-      >
-    ?
-        | Obj[P]
-        | Prop<Obj[P]>
-        | Record<string | number | symbol, Readable>
-        | Prop<Record<string | number | symbol, Readable>>
-    : Obj[P] | Prop<Obj[P]>
+  [P in keyof Obj]: Obj[P] | Prop<Obj[P]>
 }
 
 export type OutputPropRecordType<Obj extends RecordType> = {
   [P in keyof Obj]?: Prop<Obj[P]>
 }
 
-export async function propInput(
-  input: Record<string | number | symbol, any>
-) {
-  if (!input) {
-    return
-  }
+export default async function <
+  F extends ImportFunctionType,
+  I extends InputPropRecordType<ImportInType<F>>,
+  O extends OutputPropRecordType<ImportOutType<F>>
+>(...input: [F, I, O]) {
+  const [fn, fnInput, fnOutput] = input
 
-  const out = {}
+  const finalFnInput: Record<string, any> = {}
   const promises = []
 
-  for (const key in input) {
+  for (const key in fnInput) {
     if (
-      input[key] instanceof Prop &&
+      fnInput[key] instanceof Prop &&
       !key.endsWith("Prop")
     ) {
       promises.push(
         (async () =>
-          (out[key] = await input[key].promise))()
+          (finalFnInput[key] = await fnInput[key]
+            .promise))()
       )
     } else {
-      out[key] = input[key]
+      finalFnInput[key] = fnInput[key]
     }
   }
 
   await Promise.all(promises)
 
-  return out
+  const out = (await fn).default(finalFnInput)
+
+  for (const key in fnOutput) {
+    fnOutput[key].value = out[key]
+  }
 }
 
-export function propOutput(
-  output: Record<string | number | symbol, any>,
-  outputMap: Record<string | number | symbol, any>,
-  signal: { break: any }
+export async function mapToStream<
+  T,
+  I extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<I>
+>(
+  input: I,
+  output: Prop<ReadableStream<T>>,
+  fn: (
+    value: IterableValueType<IV>,
+    key?: RecordKeyType
+  ) => T
 ) {
-  if (output?.break) {
-    signal.break = output.break
-  }
-  for (const key in outputMap) {
-    if (outputMap[key] instanceof Prop) {
-      if (output[key] instanceof Prop) {
-        ;(async () =>
-          (outputMap[key].value = await output[key]))()
-      } else {
-        outputMap[key].value = output[key]
-      }
-    }
-  }
+  let streamController: ReadableStreamController<T>
+
+  const finalOutput = new ReadableStream({
+    start(controller) {
+      streamController = controller
+    },
+  })
+
+  iterate(
+    input,
+    (v, k) => streamController.enqueue(fn(v, k)),
+    () => streamController.close()
+  )
+
+  output.value = finalOutput
 }
 
-export function all<Obj extends RecordType>(obj: Obj) {
-  return async (
-    input: InputOutputMapType<Obj>
-  ): Promise<{ break: any }> => {
-    const signal = { break: undefined }
-    const promises = []
-
-    for (const key in obj) {
-      promises.push(
-        (async () => {
-          propOutput(
-            signal.break === undefined
-              ? await obj[key](
-                  await propInput(input[key][0])
-                )
-              : {},
-            input[key][1],
-            signal
-          )
-        })()
-      )
-    }
-
-    await Promise.all(promises)
-
-    return signal
-  }
+export async function mapToArray<
+  T,
+  I extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<I>
+>(
+  input: I,
+  output: Prop<T[]>,
+  fn: (
+    value: IterableValueType<IV>,
+    key?: RecordKeyType
+  ) => T
+) {
+  const finalOutput = []
+  iterate(input, (v, k) => finalOutput.push(fn(v, k)))
+  output.value = finalOutput
 }
 
-export function any<Obj extends RecordType>(obj: Obj) {
-  return async (
-    input: InputOutputMapAnyType<Obj>
-  ): Promise<{ break: any }> => {
-    const objs: any = {}
+export async function mapToRecord<
+  K extends RecordKeyType,
+  V,
+  I extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<I>
+>(
+  input: I,
+  output: Prop<Record<K, V>>,
+  fn: (
+    value: IterableValueType<IV>,
+    key?: RecordKeyType
+  ) => [K, V]
+) {
+  const finalOutput: Record<RecordKeyType, V> = {}
 
-    for (const key in obj) {
-      if (input[key]) {
-        objs[key] = obj[key]
-      }
-    }
+  iterate(input, (value, key) => {
+    const [k, v] = fn(value, key)
+    finalOutput[k] = v
+  })
 
-    return await all(objs)(input as InputOutputMapType<Obj>)
-  }
+  output.value = finalOutput
 }
 
-export function each<Obj extends RecordType>(obj: Obj) {
-  return async (
-    input: InputOutputMapType<Obj>
-  ): Promise<{ break: any }> => {
-    const signal = { break: undefined }
-    const keys = Object.keys(obj)
-
-    for (const key of keys) {
-      propOutput(
-        signal.break === undefined
-          ? await obj[key](await propInput(input[key][0]))
-          : {},
-        input[key][1],
-        signal
-      )
-    }
-
-    return signal
+export async function iterate(
+  input: IterableType | Prop<IterableType>,
+  callback: (value: any, key?: RecordKeyType) => void,
+  complete?: () => void
+) {
+  if (input instanceof Prop) {
+    input = await input.promise
   }
-}
 
-export function anyEach<Obj extends RecordType>(obj: Obj) {
-  return async (
-    input: InputOutputMapType<Obj>
-  ): Promise<{ break: any }> => {
-    const signal = { break: undefined }
-    const keys = Object.keys(obj)
-
-    for (const key of keys) {
-      if (input[key]) {
-        propOutput(
-          signal.break === undefined
-            ? await obj[key](await propInput(input[key][0]))
-            : {},
-          input[key][1],
-          signal
-        )
-      }
+  if (input instanceof ReadableStream) {
+    const stream = input.getReader()
+    const pump = () => {
+      return stream.read().then(({ done, value }) => {
+        if (done) {
+          complete()
+        } else {
+          callback(value)
+          return stream.read().then(pump)
+        }
+      })
     }
-
-    return signal
+    pump()
+  } else if (Array.isArray(input)) {
+    for (const value of input) {
+      callback(value)
+    }
+    complete()
+  } else if (typeof input === "object" && input !== null) {
+    for (const key in input) {
+      callback(input[key], key)
+    }
+    complete()
   }
 }
 

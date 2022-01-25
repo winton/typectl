@@ -1,147 +1,138 @@
 import expect from "expect"
-import { all, any, each, prop } from "./typectl"
+import { mapToArray, prop, RecordKeyType } from "./typectl"
+import call, { mapToStream } from "./typectl"
+import { ReadableStream } from "web-streams-polyfill/ponyfill"
 
-const incrementNumber = ({
-  num,
-  increment,
-}: {
-  num: number
-  increment: number
-}) => {
-  return { num: num + increment }
-}
+const fakeDynamicImport = Promise.resolve({
+  default: ({ hi }: { hi: boolean }) => {
+    return { hello: hi }
+  },
+})
 
 describe("typectl", () => {
-  it("runs functions (all)", async () => {
-    // control flow builder
-    const increment = all({
-      incrementNumberBy1: incrementNumber,
-      incrementNumberBy2: incrementNumber,
+  describe("call", () => {
+    it("calls dynamic import", async () => {
+      const hello = prop<boolean>()
+      await call(fakeDynamicImport, { hi: true }, { hello })
+      expect(hello.value).toBe(true)
     })
 
-    // create props (see next section)
-    const num1 = prop<number>()
-    const num2 = prop<number>()
+    it("waits for prop args", async () => {
+      const hi = prop<boolean>()
+      const hello = prop<boolean>()
+      setTimeout(() => (hi.value = true), 10)
+      await call(fakeDynamicImport, { hi: true }, { hello })
+      expect(hello.value).toBe(true)
+    })
+  })
 
-    // execute control flow
-    await increment({
-      incrementNumberBy1: [
-        // argument mapping
-        { num: 0, increment: 1 },
-        // return mapping
-        { num: num1 },
-      ],
-      incrementNumberBy2: [
-        // argument mapping
-        { num: num1, increment: 2 },
-        // return mapping
-        { num: num2 },
-      ],
+  describe("mapToStream", () => {
+    it("from array", async () => {
+      const output = prop<ReadableStream<string>>()
+
+      await mapToStream(["blah"], output, (v) => v)
+
+      const reader = output.value.getReader()
+
+      expect(await reader.read()).toEqual({
+        value: "blah",
+        done: false,
+      })
+
+      expect(await reader.read()).toEqual({ done: true })
     })
 
-    // drumroll please...
-    expect(num1.value).toBe(1)
-    expect(num2.value).toBe(3)
-  })
+    it("from stream", async () => {
+      let streamController: ReadableStreamController<string>
 
-  it("freezes props", async () => {
-    const hello = prop("hello")
-
-    expect(() => {
-      hello.value = "hi" // error!
-    }).toThrow()
-
-    const hi = prop()
-    hi.value = "hi" // no error!
-  })
-
-  it("awaits props", async () => {
-    const hello = prop<string>()
-    setTimeout(() => (hello.value = "hello"), 10)
-    expect(await hello.promise).toBe("hello")
-  })
-
-  it("nests builders", async () => {
-    // nested control flow builders
-    const increment = all({
-      incrementNumberBy1: incrementNumber,
-      incrementNumberEach: each({
-        incrementNumberBy2: incrementNumber,
-        incrementNumberBy3: incrementNumber,
-        incrementNumberAny: any({
-          incrementNumberBy4: incrementNumber,
-          incrementNumberBy5: incrementNumber,
-        }),
-      }),
-    })
-
-    // create props
-    const num = prop<number>()
-    const num2 = prop<number>()
-    const num3 = prop<number>()
-    const num4 = prop<number>()
-
-    // call control flow
-    await increment({
-      // input & output mappings
-      incrementNumberBy1: [
-        { num: 0, increment: 1 },
-        { num },
-      ],
-      incrementNumberEach: [
-        {
-          incrementNumberBy2: [
-            { num, increment: 2 },
-            { num: num2 },
-          ],
-          incrementNumberBy3: [
-            { num: num2, increment: 3 },
-            { num: num3 },
-          ],
-          incrementNumberAny: [
-            {
-              incrementNumberBy4: [
-                { num: num3, increment: 4 },
-                { num: num4 },
-              ],
-              incrementNumberBy5: undefined,
-            },
-          ],
+      const stream = new ReadableStream({
+        start(controller) {
+          streamController = controller
         },
-      ],
+      })
+
+      streamController.enqueue("blah")
+      streamController.close()
+
+      const output = prop<ReadableStream<string>>()
+
+      await mapToStream(stream, output, (v) => v)
+
+      const reader = output.value.getReader()
+
+      expect(await reader.read()).toEqual({
+        value: "blah",
+        done: false,
+      })
+
+      expect(await reader.read()).toEqual({ done: true })
     })
 
-    // drumroll please...
-    expect(num.value).toBe(1)
-    expect(num2.value).toBe(3)
-    expect(num3.value).toBe(6)
-    expect(num4.value).toBe(10)
+    it("from record", async () => {
+      const output =
+        prop<ReadableStream<[string, string]>>()
+
+      await mapToStream({ hi: "blah" }, output, (v, k) => [
+        k,
+        v,
+      ])
+
+      const reader = output.value.getReader()
+
+      expect(await reader.read()).toEqual({
+        value: ["hi", "blah"],
+        done: false,
+      })
+
+      expect(await reader.read()).toEqual({ done: true })
+    })
   })
 
-  it("breaks", async () => {
-    // control flow builder
-    const caller = each({
-      first: () => ({ num: 1 }),
-      second: () => ({ num: 2, break: true }),
-      third: () => ({ num: 3 }),
+  describe("mapToArray", () => {
+    it("from array", async () => {
+      const output = prop<string[]>()
+
+      await mapToArray(["blah"], output, (v) => v)
+
+      expect(output.value).toEqual(["blah"])
     })
 
-    // create props
-    const num1 = prop<number>()
-    const num2 = prop<number>()
-    const num3 = prop<number>()
+    it("from prop array", async () => {
+      const output = prop<string[]>()
 
-    // execute control flow
-    const out = await caller({
-      first: [{}, { num: num1 }],
-      second: [{}, { num: num2 }],
-      third: [{}, { num: num3 }],
+      await mapToArray(prop(["blah"]), output, (v) => v)
+
+      expect(output.value).toEqual(["blah"])
     })
 
-    // drumroll please...
-    expect(out).toEqual({ break: true })
-    expect(num1.value).toBe(1)
-    expect(num2.value).toBe(2)
-    expect(num3.value).toBeUndefined()
+    it("from stream", async () => {
+      let streamController: ReadableStreamController<string>
+
+      const stream = new ReadableStream({
+        start(controller) {
+          streamController = controller
+        },
+      })
+
+      streamController.enqueue("blah")
+      streamController.close()
+
+      const output = prop<string[]>()
+
+      await mapToArray(stream, output, (v) => v)
+
+      expect(output.value).toEqual(["blah"])
+    })
+
+    it("from record", async () => {
+      const output = prop<[string, RecordKeyType][]>()
+
+      await mapToArray({ hi: "blah" }, output, (v, k) => [
+        k,
+        v,
+      ])
+
+      expect(output.value).toEqual([["hi", "blah"]])
+    })
   })
 })

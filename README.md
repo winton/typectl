@@ -8,71 +8,26 @@ npm install typectl
 
 ## Goals
 
-1. Dynamically execute groups of pure functions using a type-safe API.
-2. Implement an input/output mapping abstraction that enables a similarly typed, but awaitable, getter/setter to be passed in place of the type requested by the function.
-3. By running functions concurrently but waiting for shared input/output, we produce optimized control flows that scale with complexity.
+1. Dynamically execute and map groups of pure functions with simple type definitions.
+2. Make any function I/O awaitable via a type-safe getter/setter known as a "prop".
+3. Produce self-optimizing, reusable control flows that scale with complexity. 🏆
 
 ## Pure function API
 
 Specify arguments and return values as single objects:
 
 ```typescript
-// incrementNumber.ts
+// hi.ts
 //
-export default ({
-  num,
-  increment,
-}: {
-  num: number
-  increment: number
-}) => {
-  return { num: num + increment }
+export default function ({ hi }: { hi: boolean }) {
+  return { hello: hi }
 }
 ```
 
-Functions may be asynchronous and omit input/output (this is a valid function):
+Functions may be async and/or void (this is a valid function):
 
 ```typescript
 export default async () => {}
-```
-
-## Your first control flow
-
-Let's run the `incrementNumber` function concurrently using the `all` builder:
-
-```typescript
-import { all, prop } from "typectl"
-import incrementNumber from "./incrementNumber"
-
-// control flow builder
-const increment = all({
-  incrementNumberBy1: incrementNumber,
-  incrementNumberBy2: incrementNumber,
-})
-
-// create props (see next section)
-const num1 = prop<number>()
-const num2 = prop<number>()
-
-// execute control flow
-await increment({
-  incrementNumberBy1: [
-    // argument mapping
-    { num: 0, increment: 1 },
-    // return mapping
-    { num: num1 },
-  ],
-  incrementNumberBy2: [
-    // argument mapping
-    { num: num1, increment: 2 },
-    // return mapping
-    { num: num2 },
-  ],
-})
-
-// drumroll please...
-expect(num1.value).toBe(1)
-expect(num2.value).toBe(3)
 ```
 
 ## Props
@@ -96,131 +51,66 @@ Use the `promise` attribute to wait for a prop to initialize:
 ```typescript
 import { prop } from "typectl"
 
-const hello = prop<string>()
-setTimeout(() => (hello.value = "hello"), 10)
-expect(await hello.promise).toBe("hello")
-```
-
-### Input/output mappings
-
-When executing a control flow, input mappings may optionally receive the prop version of the input type. The caller function waits for the prop to initialize before executing the relevant control flow function.
-
-Because function execution waits on input initialization, asynchronous functions within a single `all` with shared variables produce naturally optimal concurrency without much thought.
-
-Output mappings are optional, but when provided, **must** use props so they can be assigned a value.
-
-## Builder functions
-
-In addition to the `all` builder function, there are also `any`, `each`, and `anyEach`:
-
-| Function | Description |
-| --- | --- |
-| `all` | Concurrent execution of *all* functions |
-| `any` | Concurrent execution of *any* functions where input maps provided |
-| `each` | Serial execution of *each* function |
-| `anyEach` | Serial execution of *each* function where input maps provided |
-
-### Nested builders
-
-Nest builder functions to create complex control flows:
-
-```typescript
-import { all, each, any, prop } from "typectl"
-import incrementNumber from "./incrementNumber"
-
-// nested control flow builders
-const increment = all({
-  incrementNumberBy1: incrementNumber,
-  incrementNumberEach: each({
-    incrementNumberBy2: incrementNumber,
-    incrementNumberBy3: incrementNumber,
-    incrementNumberAny: any({
-      incrementNumberBy4: incrementNumber,
-      incrementNumberBy5: incrementNumber,
-    }),
-  }),
-})
-
-// create props
-const num = prop<number>()
-const num2 = prop<number>()
-const num3 = prop<number>()
-const num4 = prop<number>()
-
-// call control flow
-await increment({
-  incrementNumberBy1: [
-    { num: 0, increment: 1 },
-    { num },
-  ],
-  incrementNumberEach: [
-    {
-      incrementNumberBy2: [
-        { num, increment: 2 },
-        { num: num2 },
-      ],
-      incrementNumberBy3: [
-        { num: num2, increment: 3 },
-        { num: num3 },
-      ],
-      incrementNumberAny: [
-        {
-          incrementNumberBy4: [
-            { num: num3, increment: 4 },
-            { num: num4 },
-          ],
-          // don't run (any)
-          incrementNumberBy5: undefined,
-        },
-      ],
-    },
-  ],
-})
-
-// drumroll please...
-expect(num.value).toBe(1)
-expect(num2.value).toBe(3)
-expect(num3.value).toBe(6)
-expect(num4.value).toBe(10)
-```
-
-## Break the flow
-
-Halt the control flow by returning a truthy value for `break`:
-
-```typescript
-export default () => {
-  return { break: true }
+export default async () => {
+  const hello = prop<string>()
+  
+  setTimeout(() => (hello.value = "hello"), 10)
+  
+  // expect(await hello.promise).toBe("hello")
 }
 ```
 
-The control flow caller function returns the break value:
+## First control flow
+
+Let's call the `hi` function we defined earlier:
 
 ```typescript
-import { all, prop } from "typectl"
+import { call, prop } from "typectl"
 
-// control flow builder
-const caller = each({
-  first: () => ({ num: 1 }),
-  second: () => ({ num: 2, break: true }),
-  third: () => ({ num: 3 }),
-})
+export default async () => {
+  const hello = prop<boolean>()
 
-// create props
-const num1 = prop<number>()
-const num2 = prop<number>()
-const num3 = prop<number>()
-
-// execute control flow
-const out = await caller({
-  first: [{}, { num: num1 }],
-  second: [{}, { num: num2 }],
-  third: [{}, { num: num3 }],
-})
-
-// drumroll please...
-expect(out).toEqual({ break: true })
-expect(num1.value).toBe(1)
-expect(num2.value).toBe(2)
-expect(num3.value).toBeUndefined()
+  await call(
+    // function
+    import("./hi"),
+    // input
+    { hi: true },
+    // output
+    { hello }
+  )
+  
+  // expect(hello.value).toBe(true)
+}
 ```
+
+> ℹ️ Input and output arguments to `call` remain type-safe whether provided as a `prop` or not.
+
+## More complex example
+
+```typescript
+import call, { all } from "typectl"
+
+export default async function () => {
+  const hello = prop<boolean>()
+  const hello2 = prop<boolean>()
+
+  await all(
+    call(import("./hi"), { hi: true }, { hello }),
+    call(import("./hi"), { hi: hello }, { hello: hello2 })
+  )
+
+  // expect(hello.value).toBe(true)
+  // expect(hello2.value).toBe(true)
+}
+```
+
+## API
+
+| Function | Description |
+| --- | --- |
+| `call` | Call a function from dynamic import |
+| `all` | Wait for calls in parallel |
+| `each` | Wait for calls in serial |
+| `mapToStream` | Map iterable to stream |
+| `mapToArray` | Map iterable to array |
+| `mapToRecord` | Map iterable to record |
