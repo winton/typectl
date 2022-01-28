@@ -18,10 +18,7 @@ const fakeDynamicImport = Promise.resolve({
 describe("typectl", () => {
   describe("all", () => {
     it("wait for calls in parallel", async () => {
-      const x = await all(
-        Promise.resolve(1),
-        Promise.resolve(2)
-      )
+      const x = await all(Promise.resolve(1), 2)
       expect(x).toEqual([1, 2])
     })
   })
@@ -29,7 +26,7 @@ describe("typectl", () => {
   describe("each", () => {
     it("wait for calls in serial", async () => {
       const x = await each(
-        async () => 1,
+        () => Promise.resolve(1),
         () => 2
       )
       expect(x).toEqual([1, 2])
