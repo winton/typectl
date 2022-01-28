@@ -1,6 +1,12 @@
 import expect from "expect"
-import { mapToArray, prop, RecordKeyType } from "./typectl"
-import call, { mapToStream } from "./typectl"
+import {
+  all,
+  each,
+  mapToArray,
+  prop,
+  RecordKeyType,
+} from "./typectl"
+import { call, mapToStream } from "./typectl"
 import { ReadableStream } from "web-streams-polyfill/ponyfill"
 
 const fakeDynamicImport = Promise.resolve({
@@ -23,6 +29,38 @@ describe("typectl", () => {
       setTimeout(() => (hi.value = true), 10)
       await call(fakeDynamicImport, { hi: true }, { hello })
       expect(hello.value).toBe(true)
+    })
+
+    it("works with all", async () => {
+      const hello = prop<boolean>()
+      const hello2 = prop<boolean>()
+      await all(
+        call(fakeDynamicImport, { hi: true }, { hello }),
+        call(
+          fakeDynamicImport,
+          { hi: hello },
+          { hello: hello2 }
+        )
+      )
+      expect(hello.value).toBe(true)
+      expect(hello2.value).toBe(true)
+    })
+
+    it("works with each", async () => {
+      const hello = prop<boolean>()
+      const hello2 = prop<boolean>()
+      await each(
+        () =>
+          call(fakeDynamicImport, { hi: true }, { hello }),
+        () =>
+          call(
+            fakeDynamicImport,
+            { hi: hello },
+            { hello: hello2 }
+          )
+      )
+      expect(hello.value).toBe(true)
+      expect(hello2.value).toBe(true)
     })
   })
 

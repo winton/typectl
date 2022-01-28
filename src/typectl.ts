@@ -45,7 +45,7 @@ export type OutputPropRecordType<Obj extends RecordType> = {
   [P in keyof Obj]?: Prop<Obj[P]>
 }
 
-export default async function <
+export async function call<
   F extends ImportFunctionType,
   I extends InputPropRecordType<ImportInType<F>>,
   O extends OutputPropRecordType<ImportOutType<F>>
@@ -76,6 +76,18 @@ export default async function <
 
   for (const key in fnOutput) {
     fnOutput[key].value = out[key]
+  }
+}
+
+export async function all(...input: Promise<any>[]) {
+  return Promise.all(input)
+}
+
+export async function each(
+  ...input: (() => Promise<any>)[]
+) {
+  for (const i of input) {
+    await i()
   }
 }
 
