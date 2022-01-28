@@ -79,16 +79,26 @@ export async function call<
   }
 }
 
-export async function all(...input: Promise<any>[]) {
+export async function all<
+  T extends readonly unknown[] | []
+>(...input: T) {
   return Promise.all(input)
 }
 
-export async function each(
-  ...input: (() => Promise<any>)[]
-) {
+export async function each<
+  T extends readonly (() => unknown)[] | []
+>(
+  ...input: T
+): Promise<{
+  [P in keyof T]: Awaited<
+    T[P] extends () => infer U ? U : any
+  >
+}> {
+  const out: any = []
   for (const i of input) {
-    await i()
+    out.push(await i())
   }
+  return out
 }
 
 export async function mapToStream<

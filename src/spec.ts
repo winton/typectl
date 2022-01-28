@@ -16,6 +16,26 @@ const fakeDynamicImport = Promise.resolve({
 })
 
 describe("typectl", () => {
+  describe("all", () => {
+    it("wait for calls in parallel", async () => {
+      const x = await all(
+        Promise.resolve(1),
+        Promise.resolve(2)
+      )
+      expect(x).toEqual([1, 2])
+    })
+  })
+
+  describe("each", () => {
+    it("wait for calls in serial", async () => {
+      const x = await each(
+        async () => 1,
+        () => 2
+      )
+      expect(x).toEqual([1, 2])
+    })
+  })
+
   describe("call", () => {
     it("calls dynamic import", async () => {
       const hello = prop<boolean>()
@@ -34,7 +54,7 @@ describe("typectl", () => {
     it("works with all", async () => {
       const hello = prop<boolean>()
       const hello2 = prop<boolean>()
-      await all(
+      const out = await all(
         call(fakeDynamicImport, { hi: true }, { hello }),
         call(
           fakeDynamicImport,
@@ -42,6 +62,7 @@ describe("typectl", () => {
           { hello: hello2 }
         )
       )
+      expect(out).toEqual([undefined, undefined])
       expect(hello.value).toBe(true)
       expect(hello2.value).toBe(true)
     })
@@ -49,7 +70,7 @@ describe("typectl", () => {
     it("works with each", async () => {
       const hello = prop<boolean>()
       const hello2 = prop<boolean>()
-      await each(
+      const out = await each(
         () =>
           call(fakeDynamicImport, { hi: true }, { hello }),
         () =>
@@ -59,6 +80,7 @@ describe("typectl", () => {
             { hello: hello2 }
           )
       )
+      expect(out).toEqual([undefined, undefined])
       expect(hello.value).toBe(true)
       expect(hello2.value).toBe(true)
     })
