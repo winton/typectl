@@ -99,6 +99,10 @@ export async function map<I extends IterableType, CV>(
     )
 
     output.array.value = finalOutput
+
+    if (iterable instanceof ReadableStream) {
+      return
+    }
   }
 
   if (output.record) {
@@ -106,6 +110,7 @@ export async function map<I extends IterableType, CV>(
 
     await iterate(iterable, async (value, key) => {
       const out = await callback(value, key)
+
       if (Array.isArray(out)) {
         const [k, v] = out
         finalOutput[k] = v
@@ -113,6 +118,10 @@ export async function map<I extends IterableType, CV>(
     })
 
     output.record.value = finalOutput
+
+    if (iterable instanceof ReadableStream) {
+      return
+    }
   }
 
   if (output.stream) {
