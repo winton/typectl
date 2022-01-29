@@ -148,9 +148,11 @@ export async function each<
   >
 }> {
   const out: any = []
+
   for (const i of input) {
     out.push(await i())
   }
+
   return out
 }
 
@@ -164,6 +166,7 @@ export async function iterate(
 
   if (input instanceof ReadableStream) {
     const stream = input.getReader()
+
     return new Promise<void>((resolve) => {
       const pump = () => {
         return stream
@@ -179,14 +182,20 @@ export async function iterate(
       }
       pump()
     })
-  } else if (Array.isArray(input)) {
-    await Promise.all(input.map(callback))
-  } else if (typeof input === "object" && input !== null) {
+  }
+
+  if (Array.isArray(input)) {
+    return Promise.all(input.map(callback))
+  }
+
+  if (typeof input === "object" && input !== null) {
     const promises = []
+
     for (const key in input) {
       promises.push(callback(input[key], key))
     }
-    await Promise.all(promises)
+
+    return Promise.all(promises)
   }
 }
 
@@ -194,34 +203,45 @@ export class Prop<T> {
   _promise: Promise<T>
   _resolve: (value: T | PromiseLike<T>) => void
   _state: T
+
   constructor(value?: T) {
     if (value === undefined) {
       this._promise = new Promise<T>(
         (resolve) => (this._resolve = resolve)
       )
-    } else {
+    }
+
+    if (value !== undefined) {
       this._promise = Promise.resolve(value)
       this._state = value
+
       Object.freeze(this)
     }
   }
+
   get promise() {
     return this._promise
   }
+
   get value() {
     return this._state
   }
+
   set value(value: T) {
     if (Object.isFrozen(this)) {
       throw new Error("Props cannot be reassigned.")
     }
+
     this._state = value
     this._resolve(value)
+
     Object.freeze(this)
   }
+
   toJSON() {
     return this._state
   }
+
   toString() {
     return JSON.stringify(this)
   }
