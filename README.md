@@ -111,6 +111,4 @@ export default async function () => {
 | `call` | Call a function from dynamic import |
 | `all` | Wait for calls in parallel |
 | `each` | Wait for calls in serial |
-| `mapToStream` | Map iterable to stream |
-| `mapToArray` | Map iterable to array |
-| `mapToRecord` | Map iterable to record |
+| `map` | Map to/from array, record, or stream |

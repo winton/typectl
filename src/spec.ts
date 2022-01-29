@@ -1,12 +1,12 @@
 import expect from "expect"
 import {
   all,
+  call,
   each,
-  mapToArray,
+  map,
   prop,
   RecordKeyType,
 } from "./typectl"
-import { call, mapToStream } from "./typectl"
 import { ReadableStream } from "web-streams-polyfill/ponyfill"
 
 const fakeDynamicImport = Promise.resolve({
@@ -83,11 +83,11 @@ describe("typectl", () => {
     })
   })
 
-  describe("mapToStream", () => {
+  describe("map to stream", () => {
     it("from array", async () => {
       const output = prop<ReadableStream<string>>()
 
-      await mapToStream(["blah"], output, (v) => v)
+      await map(["blah"], (v) => v, { stream: output })
 
       const reader = output.value.getReader()
 
@@ -113,7 +113,7 @@ describe("typectl", () => {
 
       const output = prop<ReadableStream<string>>()
 
-      await mapToStream(stream, output, (v) => v)
+      await map(stream, (v) => v, { stream: output })
 
       const reader = output.value.getReader()
 
@@ -127,12 +127,11 @@ describe("typectl", () => {
 
     it("from record", async () => {
       const output =
-        prop<ReadableStream<[string, string]>>()
+        prop<ReadableStream<[RecordKeyType, string]>>()
 
-      await mapToStream({ hi: "blah" }, output, (v, k) => [
-        k,
-        v,
-      ])
+      await map({ hi: "blah" }, (v, k) => [k, v], {
+        stream: output,
+      })
 
       const reader = output.value.getReader()
 
@@ -145,11 +144,11 @@ describe("typectl", () => {
     })
   })
 
-  describe("mapToArray", () => {
+  describe("map to array", () => {
     it("from array", async () => {
       const output = prop<string[]>()
 
-      await mapToArray(["blah"], output, (v) => v)
+      await map(["blah"], (v) => v, { array: output })
 
       expect(output.value).toEqual(["blah"])
     })
@@ -157,7 +156,7 @@ describe("typectl", () => {
     it("from prop array", async () => {
       const output = prop<string[]>()
 
-      await mapToArray(prop(["blah"]), output, (v) => v)
+      await map(prop(["blah"]), (v) => v, { array: output })
 
       expect(output.value).toEqual(["blah"])
     })
@@ -176,20 +175,72 @@ describe("typectl", () => {
 
       const output = prop<string[]>()
 
-      await mapToArray(stream, output, (v) => v)
+      await map(stream, (v) => v, { array: output })
 
       expect(output.value).toEqual(["blah"])
     })
 
     it("from record", async () => {
-      const output = prop<[string, RecordKeyType][]>()
+      const output = prop<[RecordKeyType, string][]>()
 
-      await mapToArray({ hi: "blah" }, output, (v, k) => [
-        k,
-        v,
-      ])
+      await map({ hi: "blah" }, (v, k) => [k, v], {
+        array: output,
+      })
 
       expect(output.value).toEqual([["hi", "blah"]])
+    })
+  })
+
+  describe("map to record", () => {
+    it("from array", async () => {
+      const output = prop<Record<string, string>>()
+
+      await map(["blah"], (v) => ["hi", v], {
+        record: output,
+      })
+
+      expect(output.value).toEqual({ hi: "blah" })
+    })
+
+    it("from prop array", async () => {
+      const output = prop<Record<string, string>>()
+
+      await map(prop(["blah"]), (v) => ["hi", v], {
+        record: output,
+      })
+
+      expect(output.value).toEqual({ hi: "blah" })
+    })
+
+    it("from stream", async () => {
+      let streamController: ReadableStreamController<string>
+
+      const stream = new ReadableStream({
+        start(controller) {
+          streamController = controller
+        },
+      })
+
+      streamController.enqueue("blah")
+      streamController.close()
+
+      const output = prop<Record<string, string>>()
+
+      await map(stream, (v) => ["hi", v], {
+        record: output,
+      })
+
+      expect(output.value).toEqual({ hi: "blah" })
+    })
+
+    it("from record", async () => {
+      const output = prop<Record<string, string>>()
+
+      await map({ hi: "blah" }, (v, k) => [k, v], {
+        record: output,
+      })
+
+      expect(output.value).toEqual({ hi: "blah" })
     })
   })
 })

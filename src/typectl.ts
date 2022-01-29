@@ -6,7 +6,7 @@ export type RecordKeyType = string | number | symbol
 export type IterableType =
   | Record<string, any>
   | any[]
-  | ReadableStream
+  | ReadableStream<any>
 
 export type IterableValueType<T> = T extends Record<
   RecordKeyType,
@@ -79,6 +79,59 @@ export async function call<
   }
 }
 
+export async function map<I extends IterableType, CV>(
+  iterable: I,
+  callback: (
+    value: IterableValueType<I>,
+    key?: RecordKeyType
+  ) => CV | [RecordKeyType, CV],
+  output: {
+    array?: Prop<CV[]>
+    record?: Prop<Record<RecordKeyType, CV>>
+    stream?: Prop<ReadableStream<CV>>
+  }
+) {
+  if (output.array) {
+    const finalOutput = []
+
+    await iterate(iterable, async (value, key) =>
+      finalOutput.push(await callback(value, key))
+    )
+
+    output.array.value = finalOutput
+  }
+
+  if (output.record) {
+    const finalOutput: Record<RecordKeyType, CV> = {}
+
+    await iterate(iterable, async (value, key) => {
+      const out = await callback(value, key)
+      if (Array.isArray(out)) {
+        const [k, v] = out
+        finalOutput[k] = v
+      }
+    })
+
+    output.record.value = finalOutput
+  }
+
+  if (output.stream) {
+    let streamController: ReadableStreamController<CV>
+
+    const finalOutput = new ReadableStream({
+      start(controller) {
+        streamController = controller
+      },
+    })
+
+    iterate(iterable, async (v, k) =>
+      streamController.enqueue((await callback(v, k)) as CV)
+    ).then(() => streamController.close())
+
+    output.stream.value = finalOutput
+  }
+}
+
 export async function all<
   T extends readonly unknown[] | []
 >(...input: T) {
@@ -101,79 +154,9 @@ export async function each<
   return out
 }
 
-export async function mapToStream<
-  T,
-  I extends IterableType | Prop<IterableType>,
-  IV extends PropValueType<I>
->(
-  input: I,
-  output: Prop<ReadableStream<T>>,
-  fn: (
-    value: IterableValueType<IV>,
-    key?: RecordKeyType
-  ) => T
-) {
-  let streamController: ReadableStreamController<T>
-
-  const finalOutput = new ReadableStream({
-    start(controller) {
-      streamController = controller
-    },
-  })
-
-  iterate(
-    input,
-    (v, k) => streamController.enqueue(fn(v, k)),
-    () => streamController.close()
-  )
-
-  output.value = finalOutput
-}
-
-export async function mapToArray<
-  T,
-  I extends IterableType | Prop<IterableType>,
-  IV extends PropValueType<I>
->(
-  input: I,
-  output: Prop<T[]>,
-  fn: (
-    value: IterableValueType<IV>,
-    key?: RecordKeyType
-  ) => T
-) {
-  const finalOutput = []
-  iterate(input, (v, k) => finalOutput.push(fn(v, k)))
-  output.value = finalOutput
-}
-
-export async function mapToRecord<
-  K extends RecordKeyType,
-  V,
-  I extends IterableType | Prop<IterableType>,
-  IV extends PropValueType<I>
->(
-  input: I,
-  output: Prop<Record<K, V>>,
-  fn: (
-    value: IterableValueType<IV>,
-    key?: RecordKeyType
-  ) => [K, V]
-) {
-  const finalOutput: Record<RecordKeyType, V> = {}
-
-  iterate(input, (value, key) => {
-    const [k, v] = fn(value, key)
-    finalOutput[k] = v
-  })
-
-  output.value = finalOutput
-}
-
 export async function iterate(
   input: IterableType | Prop<IterableType>,
-  callback: (value: any, key?: RecordKeyType) => void,
-  complete?: () => void
+  callback: (value: any, key?: RecordKeyType) => any
 ) {
   if (input instanceof Prop) {
     input = await input.promise
@@ -181,27 +164,29 @@ export async function iterate(
 
   if (input instanceof ReadableStream) {
     const stream = input.getReader()
-    const pump = () => {
-      return stream.read().then(({ done, value }) => {
-        if (done) {
-          complete()
-        } else {
-          callback(value)
-          return stream.read().then(pump)
-        }
-      })
-    }
-    pump()
+    return new Promise<void>((resolve) => {
+      const pump = () => {
+        return stream
+          .read()
+          .then(async ({ done, value }) => {
+            if (done) {
+              resolve()
+            } else {
+              await callback(value)
+              return stream.read().then(pump)
+            }
+          })
+      }
+      pump()
+    })
   } else if (Array.isArray(input)) {
-    for (const value of input) {
-      callback(value)
-    }
-    complete()
+    await Promise.all(input.map(callback))
   } else if (typeof input === "object" && input !== null) {
+    const promises = []
     for (const key in input) {
-      callback(input[key], key)
+      promises.push(callback(input[key], key))
     }
-    complete()
+    await Promise.all(promises)
   }
 }
 
