@@ -8,9 +8,8 @@ export type IterableType =
   | any[]
   | ReadableStream<any>
 
-export type IterableValueType<T> = T extends Record<
-  RecordKeyType,
-  infer V
+export type IterableValueType<T> = T extends PropValueType<
+  Record<RecordKeyType, infer V>
 >
   ? V
   : T extends (infer V)[]
@@ -79,96 +78,168 @@ export async function call<
   }
 }
 
-export async function map<I extends IterableType, CV>(
-  iterable: I,
-  callback: (
-    value: IterableValueType<I>,
-    key?: RecordKeyType
-  ) => CV | [RecordKeyType, CV],
-  output: {
-    array?: Prop<CV[]>
-    record?: Prop<Record<RecordKeyType, CV>>
-    stream?: Prop<ReadableStream<CV>>
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>
+>(
+  iterable: IP,
+  options: {
+    concurrency?: number
+    array?: Prop<
+      IV extends Record<RecordKeyType, I>
+        ? [RecordKeyType, I][]
+        : I[]
+    >
+    record?: Prop<Record<RecordKeyType, I>>
+    stream?: Prop<
+      ReadableStream<
+        IV extends Record<RecordKeyType, I>
+          ? [RecordKeyType, I]
+          : I
+      >
+    >
   }
-) {
-  if (output.array) {
+): Promise<void>
+
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>,
+  CO
+>(
+  iterable: IP,
+  options: {
+    concurrency?: number
+    array?: Prop<CO[]>
+    record?: Prop<Record<RecordKeyType, CO>>
+    stream?: Prop<ReadableStream<CO>>
+  },
+  callback: IV extends Record<RecordKeyType, I>
+    ? (
+        value: I,
+        key: RecordKeyType
+      ) => typeof options["record"] extends Prop<
+        Record<RecordKeyType, CO>
+      >
+        ? [RecordKeyType, CO] | Promise<[RecordKeyType, CO]>
+        : CO | Promise<CO>
+    : (
+        value: I
+      ) => typeof options["record"] extends Prop<
+        Record<RecordKeyType, CO>
+      >
+        ? [RecordKeyType, CO] | Promise<[RecordKeyType, CO]>
+        : CO | Promise<CO>
+): Promise<void>
+
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>,
+  CO
+>(
+  iterable: IP,
+  options: {
+    concurrency?: number
+    array?: Prop<CO[]>
+    record?: Prop<Record<RecordKeyType, CO>>
+    stream?: Prop<ReadableStream<CO>>
+  },
+  callback?: (
+    value: I,
+    key?: RecordKeyType
+  ) => CO | Promise<CO>
+): Promise<void> {
+  if (options?.array) {
     const finalOutput = []
 
-    await iterate(iterable, async (value, key) =>
-      finalOutput.push(await callback(value, key))
+    await all(
+      iterable,
+      { concurrency: options.concurrency },
+      async (value, key) =>
+        finalOutput.push(
+          callback
+            ? await callback(value, key)
+            : key
+            ? [key, value]
+            : value
+        )
     )
 
-    output.array.value = finalOutput
+    options.array.value = finalOutput
 
     if (iterable instanceof ReadableStream) {
       return
     }
   }
 
-  if (output.record) {
-    const finalOutput: Record<RecordKeyType, CV> = {}
+  if (options?.record) {
+    const finalOutput: Record<RecordKeyType, CO> = {}
 
-    await iterate(iterable, async (value, key) => {
-      const out = await callback(value, key)
+    await all(
+      iterable,
+      { concurrency: options.concurrency },
+      async (value, key) => {
+        const out = callback
+          ? await callback(value, key)
+          : [key, value]
 
-      if (Array.isArray(out)) {
-        const [k, v] = out
-        finalOutput[k] = v
+        if (Array.isArray(out)) {
+          const [k, v] = out
+          finalOutput[k] = v
+        }
       }
-    })
+    )
 
-    output.record.value = finalOutput
+    options.record.value = finalOutput
 
     if (iterable instanceof ReadableStream) {
       return
     }
   }
 
-  if (output.stream) {
-    let streamController: ReadableStreamController<CV>
+  if (options?.stream) {
+    let streamController: ReadableStreamController<CO>
 
-    const finalOutput = new ReadableStream({
+    const finalOutput = new ReadableStream<CO>({
       start(controller) {
         streamController = controller
       },
     })
 
-    iterate(iterable, async (v, k) =>
-      streamController.enqueue((await callback(v, k)) as CV)
+    all(
+      iterable,
+      { concurrency: options.concurrency },
+      async (v, k) =>
+        streamController.enqueue(
+          callback
+            ? ((await callback(v, k)) as
+                | CO
+                | [RecordKeyType, CO])
+            : k
+            ? [k, v]
+            : v
+        )
     ).then(() => streamController.close())
 
-    output.stream.value = finalOutput
+    options.stream.value = finalOutput
   }
 }
 
-export async function all<
-  T extends readonly unknown[] | []
->(...input: T) {
-  return Promise.all(input)
-}
-
-export async function each<
-  T extends readonly (() => unknown)[] | []
->(
-  ...input: T
-): Promise<{
-  [P in keyof T]: Awaited<
-    T[P] extends () => infer U ? U : any
-  >
-}> {
-  const out: any = []
-
-  for (const i of input) {
-    out.push(await i())
-  }
-
-  return out
-}
-
-export async function iterate(
+export async function all(
   input: IterableType | Prop<IterableType>,
-  callback: (value: any, key?: RecordKeyType) => any
+  options?: {
+    concurrency?: number
+  },
+  callback?: (value: any, key?: RecordKeyType) => any
 ) {
+  const cb = callback
+    ? options?.concurrency
+      ? pLimit(options.concurrency, callback)
+      : callback
+    : undefined
+
   if (input instanceof Prop) {
     input = await input.promise
   }
@@ -184,7 +255,7 @@ export async function iterate(
             if (done) {
               resolve()
             } else {
-              await callback(value)
+              await (cb ? cb(value) : value)
               return stream.read().then(pump)
             }
           })
@@ -194,18 +265,24 @@ export async function iterate(
   }
 
   if (Array.isArray(input)) {
-    return Promise.all(input.map(callback))
+    return Promise.all(cb ? input.map(cb) : input)
   }
 
   if (typeof input === "object" && input !== null) {
     const promises = []
 
     for (const key in input) {
-      promises.push(callback(input[key], key))
+      promises.push(cb ? cb(input[key], key) : input[key])
     }
 
     return Promise.all(promises)
   }
+}
+
+export async function each(
+  input: IterableType | Prop<IterableType>
+) {
+  return all(input, { concurrency: 1 }, (v) => v())
 }
 
 export class Prop<T> {
@@ -258,4 +335,48 @@ export class Prop<T> {
 
 export function prop<T>(value?: T): Prop<T> {
   return new Prop(value)
+}
+
+const wrapFunction = (from: any, to: any) =>
+  Object.defineProperties(to, {
+    length: { value: from.length },
+    name: { value: from.name },
+  })
+
+// eslint-disable-next-line no-empty-function
+const noop = () => {}
+
+export function pLimit<Fn extends (...args: any[]) => any>(
+  concurrency: number,
+  fn: Fn
+): ReturnType<Fn> extends PromiseLike<any> ? Fn : never {
+  if (
+    !Number.isSafeInteger(concurrency) ||
+    concurrency <= 0
+  ) {
+    throw new TypeError(
+      `Expected \`concurrency\` to be a positive integer: ${concurrency}`
+    )
+  }
+
+  const pending = new Set()
+
+  return wrapFunction(fn, async (...args: any[]) => {
+    while (pending.size === concurrency) {
+      await Promise.race(pending)
+    }
+
+    const promise = fn(...args)
+
+    ;(async () => {
+      const nonThrowingPromise = promise
+        .then(noop, noop)
+        .catch(noop)
+      pending.add(nonThrowingPromise)
+      await nonThrowingPromise
+      pending.delete(nonThrowingPromise)
+    })()
+
+    return promise
+  })
 }
