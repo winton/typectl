@@ -85,14 +85,36 @@ export async function map<
 >(
   iterable: IP,
   options: {
-    concurrency?: number
-    array?: Prop<
+    compress?: boolean
+    array: Prop<
       IV extends Record<RecordKeyType, I>
         ? [RecordKeyType, I][]
         : I[]
     >
-    record?: Prop<Record<RecordKeyType, I>>
-    stream?: Prop<
+  }
+): Promise<void>
+
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>
+>(
+  iterable: IP,
+  options: {
+    compress?: boolean
+    record: Prop<Record<RecordKeyType, I>>
+  }
+): Promise<void>
+
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>
+>(
+  iterable: IP,
+  options: {
+    compress?: boolean
+    stream: Prop<
       ReadableStream<
         IV extends Record<RecordKeyType, I>
           ? [RecordKeyType, I]
@@ -105,32 +127,17 @@ export async function map<
 export async function map<
   IP extends IterableType | Prop<IterableType>,
   IV extends PropValueType<IP>,
-  I extends IterableValueType<IV>,
-  CO
+  I extends IterableValueType<IV>
 >(
   iterable: IP,
   options: {
-    concurrency?: number
-    array?: Prop<CO[]>
-    record?: Prop<Record<RecordKeyType, CO>>
-    stream?: Prop<ReadableStream<CO>>
-  },
-  callback: IV extends Record<RecordKeyType, I>
-    ? (
-        value: I,
-        key: RecordKeyType
-      ) => typeof options["record"] extends Prop<
-        Record<RecordKeyType, CO>
-      >
-        ? [RecordKeyType, CO] | Promise<[RecordKeyType, CO]>
-        : CO | Promise<CO>
-    : (
-        value: I
-      ) => typeof options["record"] extends Prop<
-        Record<RecordKeyType, CO>
-      >
-        ? [RecordKeyType, CO] | Promise<[RecordKeyType, CO]>
-        : CO | Promise<CO>
+    compress?: boolean
+    value: Prop<
+      IV extends Record<RecordKeyType, I>
+        ? [RecordKeyType, I]
+        : I
+    >
+  }
 ): Promise<void>
 
 export async function map<
@@ -141,10 +148,89 @@ export async function map<
 >(
   iterable: IP,
   options: {
+    compress?: boolean
+    concurrency?: number
+    array: Prop<CO[]>
+  },
+  callback: IV extends Record<RecordKeyType, I>
+    ? (value: I, key: RecordKeyType) => CO | Promise<CO>
+    : (value: I) => CO | Promise<CO>
+): Promise<void>
+
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>,
+  CO
+>(
+  iterable: IP,
+  options: {
+    compress?: boolean
+    concurrency?: number
+    record: Prop<Record<RecordKeyType, CO>>
+  },
+  callback: IV extends Record<RecordKeyType, I>
+    ? (
+        value: I,
+        key: RecordKeyType
+      ) =>
+        | [RecordKeyType, CO]
+        | Promise<[RecordKeyType, CO]>
+    : (
+        value: I
+      ) =>
+        | [RecordKeyType, CO]
+        | Promise<[RecordKeyType, CO]>
+): Promise<void>
+
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>,
+  CO
+>(
+  iterable: IP,
+  options: {
+    compress?: boolean
+    concurrency?: number
+    stream: Prop<ReadableStream<CO>>
+  },
+  callback: IV extends Record<RecordKeyType, I>
+    ? (value: I, key: RecordKeyType) => CO | Promise<CO>
+    : (value: I) => CO | Promise<CO>
+): Promise<void>
+
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>,
+  CO
+>(
+  iterable: IP,
+  options: {
+    compress?: boolean
+    concurrency?: number
+    value: Prop<CO>
+  },
+  callback: IV extends Record<RecordKeyType, I>
+    ? (value: I, key: RecordKeyType) => CO | Promise<CO>
+    : (value: I) => CO | Promise<CO>
+): Promise<void>
+
+export async function map<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>,
+  CO
+>(
+  iterable: IP,
+  options: {
+    compress?: boolean
     concurrency?: number
     array?: Prop<CO[]>
     record?: Prop<Record<RecordKeyType, CO>>
     stream?: Prop<ReadableStream<CO>>
+    value?: Prop<CO>
   },
   callback?: (
     value: I,
@@ -157,14 +243,19 @@ export async function map<
     await all(
       iterable,
       { concurrency: options.concurrency },
-      async (value, key) =>
-        finalOutput.push(
-          callback
-            ? await callback(value, key)
-            : key
-            ? [key, value]
-            : value
-        )
+      async (value, key) => {
+        if (callback) {
+          const out = await callback(value, key)
+          if (!options.compress || out !== undefined) {
+            finalOutput.push(out)
+          }
+        } else if (
+          !options.compress ||
+          value !== undefined
+        ) {
+          finalOutput.push(key ? [key, value] : value)
+        }
+      }
     )
 
     options.array.value = finalOutput
@@ -187,12 +278,45 @@ export async function map<
 
         if (Array.isArray(out)) {
           const [k, v] = out
-          finalOutput[k] = v
+          if (!options.compress || v !== undefined) {
+            finalOutput[k] = v
+          }
         }
       }
     )
 
     options.record.value = finalOutput
+
+    if (iterable instanceof ReadableStream) {
+      return
+    }
+  }
+
+  if (options?.value) {
+    let finalOutput: CO
+
+    await all(
+      iterable,
+      { concurrency: options.concurrency },
+      async (value, key) => {
+        if (finalOutput) {
+          return
+        }
+        if (callback) {
+          const out = await callback(value, key)
+          if (!options.compress || out !== undefined) {
+            finalOutput = out
+          }
+        } else if (
+          !options.compress ||
+          value !== undefined
+        ) {
+          finalOutput = key ? [key, value] : value
+        }
+      }
+    )
+
+    options.value.value = finalOutput
 
     if (iterable instanceof ReadableStream) {
       return
@@ -211,16 +335,16 @@ export async function map<
     all(
       iterable,
       { concurrency: options.concurrency },
-      async (v, k) =>
-        streamController.enqueue(
-          callback
-            ? ((await callback(v, k)) as
-                | CO
-                | [RecordKeyType, CO])
-            : k
-            ? [k, v]
-            : v
-        )
+      async (v, k) => {
+        if (callback) {
+          const out = await callback(v, k)
+          if (!options.compress || out !== undefined) {
+            streamController.enqueue(out)
+          }
+        } else if (!options.compress || v !== undefined) {
+          streamController.enqueue(k ? [k, v] : v)
+        }
+      }
     ).then(() => streamController.close())
 
     options.stream.value = finalOutput
@@ -256,7 +380,7 @@ export async function all(
               resolve()
             } else {
               await (cb ? cb(value) : value)
-              return stream.read().then(pump)
+              return pump()
             }
           })
       }
@@ -265,7 +389,7 @@ export async function all(
   }
 
   if (Array.isArray(input)) {
-    return Promise.all(cb ? input.map(cb) : input)
+    return Promise.all(cb ? input.map((v) => cb(v)) : input)
   }
 
   if (typeof input === "object" && input !== null) {

@@ -87,7 +87,10 @@ describe("typectl", () => {
     it("from array", async () => {
       const output = prop<ReadableStream<string>>()
 
-      await map(["blah"], { stream: output })
+      await map(["blah", undefined], {
+        compress: true,
+        stream: output,
+      })
 
       const reader = output.value.getReader()
 
@@ -109,11 +112,12 @@ describe("typectl", () => {
       })
 
       streamController.enqueue("blah")
+      streamController.enqueue(undefined)
       streamController.close()
 
       const output = prop<ReadableStream<string>>()
 
-      await map(stream, { stream: output })
+      await map(stream, { compress: true, stream: output })
 
       const reader = output.value.getReader()
 
@@ -129,7 +133,10 @@ describe("typectl", () => {
       const output =
         prop<ReadableStream<[RecordKeyType, string]>>()
 
-      await map({ hi: "blah" }, { stream: output })
+      await map(
+        { hi: "blah", no: undefined },
+        { compress: true, stream: output }
+      )
 
       const reader = output.value.getReader()
 
@@ -146,7 +153,10 @@ describe("typectl", () => {
     it("from array", async () => {
       const output = prop<string[]>()
 
-      await map(["blah"], { array: output })
+      await map(["blah", undefined], {
+        array: output,
+        compress: true,
+      })
 
       expect(output.value).toEqual(["blah"])
     })
@@ -169,11 +179,12 @@ describe("typectl", () => {
       })
 
       streamController.enqueue("blah")
+      streamController.enqueue(undefined)
       streamController.close()
 
       const output = prop<string[]>()
 
-      await map(stream, { array: output })
+      await map(stream, { array: output, compress: true })
 
       expect(output.value).toEqual(["blah"])
     })
@@ -181,7 +192,10 @@ describe("typectl", () => {
     it("from record", async () => {
       const output = prop<[RecordKeyType, string][]>()
 
-      await map({ hi: "blah" }, { array: output })
+      await map(
+        { hi: "blah", no: undefined },
+        { array: output, compress: true }
+      )
 
       expect(output.value).toEqual([["hi", "blah"]])
     })
@@ -191,10 +205,11 @@ describe("typectl", () => {
     it("from array", async () => {
       const output = prop<Record<string, string>>()
 
-      await map(["blah"], { record: output }, (v) => [
-        "hi",
-        v,
-      ])
+      await map(
+        ["blah", undefined],
+        { compress: true, record: output },
+        (v) => ["hi", v]
+      )
 
       expect(output.value).toEqual({ hi: "blah" })
     })
@@ -202,10 +217,11 @@ describe("typectl", () => {
     it("from prop array", async () => {
       const output = prop<Record<string, string>>()
 
-      await map(prop(["blah"]), { record: output }, (v) => [
-        "hi",
-        v,
-      ])
+      await map(
+        prop(["blah", undefined]),
+        { compress: true, record: output },
+        (v) => ["hi", v]
+      )
 
       expect(output.value).toEqual({ hi: "blah" })
     })
@@ -220,14 +236,16 @@ describe("typectl", () => {
       })
 
       streamController.enqueue("blah")
+      streamController.enqueue(undefined)
       streamController.close()
 
       const output = prop<Record<string, boolean>>()
 
-      await map(stream, { record: output }, (v) => [
-        v,
-        true,
-      ])
+      await map(
+        stream,
+        { compress: true, record: output },
+        (v) => [v, v ? true : undefined]
+      )
 
       expect(output.value).toEqual({ blah: true })
     })
@@ -235,9 +253,67 @@ describe("typectl", () => {
     it("from record", async () => {
       const output = prop<Record<string, string>>()
 
-      await map({ hi: "blah" }, { record: output })
+      await map(
+        { hi: "blah", no: undefined },
+        { compress: true, record: output }
+      )
 
       expect(output.value).toEqual({ hi: "blah" })
+    })
+  })
+
+  describe("map to value", () => {
+    it("from array", async () => {
+      const output = prop<string>()
+
+      await map([undefined, "blah"], {
+        compress: true,
+        value: output,
+      })
+
+      expect(output.value).toEqual("blah")
+    })
+
+    it("from prop array", async () => {
+      const output = prop<string>()
+
+      await map(prop([undefined, "blah"]), {
+        compress: true,
+        value: output,
+      })
+
+      expect(output.value).toEqual("blah")
+    })
+
+    it("from stream", async () => {
+      let streamController: ReadableStreamController<string>
+
+      const stream = new ReadableStream<string>({
+        start(controller) {
+          streamController = controller
+        },
+      })
+
+      streamController.enqueue(undefined)
+      streamController.enqueue("blah")
+      streamController.close()
+
+      const output = prop<string>()
+
+      await map(stream, { compress: true, value: output })
+
+      expect(output.value).toEqual("blah")
+    })
+
+    it("from record", async () => {
+      const output = prop<[string, string]>()
+
+      await map(
+        { hi: "blah", no: undefined },
+        { compress: true, value: output }
+      )
+
+      expect(output.value).toEqual(["hi", "blah"])
     })
   })
 })

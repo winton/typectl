@@ -80,8 +80,6 @@ export default async () => {
 }
 ```
 
-> ℹ️ Input and output arguments to `call` remain type-safe whether provided as a `prop` or not.
-
 ## More complex example
 
 ```typescript
@@ -108,4 +106,4 @@ export default async function () => {
 | `call` | Call a function from dynamic import |
 | `all` | Execute functions in parallel |
 | `each` | Execute functions in serial |
-| `map` | Map to & from array, record, or stream |
+| `map` | Map between arrays, records, or streams |
