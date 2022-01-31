@@ -62,7 +62,7 @@ export default async () => {
 
 ## First control flow
 
-Let's call the `hi` function we defined earlier:
+Let's call the `hi.ts` function we [defined earlier](#pure-function-api):
 
 ```typescript
 import { call, prop } from "typectl"
@@ -71,12 +71,9 @@ export default async () => {
   const hello = prop<boolean>()
 
   await call(
-    // function
-    import("./hi"),
-    // input
-    { hi: true },
-    // output
-    { hello }
+    import("./hi"), // function
+    { hi: true }, // input
+    { hello } // output
   )
   
   // expect(hello.value).toBe(true)
@@ -94,10 +91,10 @@ export default async function () => {
   const hello = prop<boolean>()
   const hello2 = prop<boolean>()
 
-  await all(
+  await all([
     call(import("./hi"), { hi: true }, { hello }),
     call(import("./hi"), { hi: hello }, { hello: hello2 })
-  )
+  ])
 
   // expect(hello.value).toBe(true)
   // expect(hello2.value).toBe(true)
@@ -109,6 +106,6 @@ export default async function () => {
 | Function | Description |
 | --- | --- |
 | `call` | Call a function from dynamic import |
-| `all` | Wait for calls in parallel |
-| `each` | Wait for calls in serial |
-| `map` | Map to/from array, record, or stream |
+| `all` | Execute functions in parallel |
+| `each` | Execute functions in serial |
+| `map` | Map to & from array, record, or stream |
