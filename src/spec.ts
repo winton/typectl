@@ -26,7 +26,10 @@ describe("typectl", () => {
   describe("each", () => {
     it("wait for calls in serial", async () => {
       const x = await each([
-        () => Promise.resolve(1),
+        () =>
+          new Promise<number>((resolve) =>
+            setTimeout(() => resolve(1), 10)
+          ),
         () => 2,
       ])
       expect(x).toEqual([1, 2])
