@@ -259,13 +259,7 @@ export async function map<
     )
 
     options.array.value = finalOutput
-
-    if (iterable instanceof ReadableStream) {
-      return
-    }
-  }
-
-  if (options?.record) {
+  } else if (options?.record) {
     const finalOutput: Record<RecordKeyType, CO> = {}
 
     await all(
@@ -286,13 +280,7 @@ export async function map<
     )
 
     options.record.value = finalOutput
-
-    if (iterable instanceof ReadableStream) {
-      return
-    }
-  }
-
-  if (options?.value) {
+  } else if (options?.value) {
     let finalOutput: CO
 
     await all(
@@ -317,13 +305,7 @@ export async function map<
     )
 
     options.value.value = finalOutput
-
-    if (iterable instanceof ReadableStream) {
-      return
-    }
-  }
-
-  if (options?.stream) {
+  } else if (options?.stream) {
     let streamController: ReadableStreamController<CO>
 
     const finalOutput = new ReadableStream<CO>({
@@ -386,13 +368,9 @@ export async function all(
       }
       pump()
     })
-  }
-
-  if (Array.isArray(input)) {
+  } else if (Array.isArray(input)) {
     return Promise.all(cb ? input.map((v) => cb(v)) : input)
-  }
-
-  if (typeof input === "object" && input !== null) {
+  } else if (typeof input === "object" && input !== null) {
     const promises = []
 
     for (const key in input) {
