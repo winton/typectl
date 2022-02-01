@@ -107,3 +107,5 @@ export default async function () => {
 | `all` | Execute functions in parallel |
 | `each` | Execute functions in serial |
 | `map` | Map between arrays, records, or streams |
+| `pLimit` | Concurrency limiter |
+| `prop` | Prop initializer |
