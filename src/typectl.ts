@@ -347,7 +347,7 @@ export async function map<
       },
     })
 
-    all(
+    await all(
       iterable,
       { concurrency: options.concurrency },
       async (...args: [any, RecordKeyType]) => {
