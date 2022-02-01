@@ -22,7 +22,8 @@
   "homepage": "https://github.com/winton/typectl#readme",
   "dependencies": {
     "io-type": "1.2.0",
-    "tslib": "2.3.1"
+    "tslib": "2.3.1",
+    "web-streams-polyfill": "3.2.0"
   },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
@@ -40,8 +41,7 @@
     "npm-check-updates": "12.2.1",
     "prettier": "2.5.1",
     "source-map-support": "0.5.21",
-    "typescript": "4.5.5",
-    "web-streams-polyfill": "3.2.0"
+    "typescript": "4.5.5"
   },
   "lint-staged": {
     "*.{css,json,md}": [
