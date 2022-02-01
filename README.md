@@ -109,3 +109,4 @@ export default async function () => {
 | `map` | Map between arrays, records, or streams |
 | `pLimit` | Concurrency limiter |
 | `prop` | Prop initializer |
+| `pair` | Key/value pair prop helper |

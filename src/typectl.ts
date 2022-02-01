@@ -484,6 +484,21 @@ export function prop<T>(value?: T): Prop<T> {
   return new Prop(value)
 }
 
+export function pair<K, V>(
+  key: K | Prop<K>,
+  value: V | Prop<V>
+): Prop<[K, V]> {
+  const output = prop<[K, V]>()
+  const k = key instanceof Prop ? key.promise : key
+  const v = value instanceof Prop ? value.promise : value
+
+  Promise.all([k, v]).then(
+    (result) => (output.value = result)
+  )
+
+  return output
+}
+
 const wrapFunction = (from: any, to: any) =>
   Object.defineProperties(to, {
     length: { value: from.length },
