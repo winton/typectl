@@ -4,7 +4,8 @@ import {
   call,
   each,
   map,
-  pair,
+  pairKey,
+  pairValue,
   prop,
   RecordKeyType,
 } from "./typectl"
@@ -92,27 +93,22 @@ describe("typectl", () => {
   })
 
   describe("props", () => {
-    it("creates pairs", async () => {
-      const key = prop<string>()
-      const value = prop<string>()
-      const keyValue = pair(key, value)
-      const keyValue2 = pair("key2", value)
-      const keyValue3 = pair(key, "value3")
+    it("pairs key", async () => {
+      const output = prop<[string, string]>()
+      const value = pairKey("key", output)
 
-      key.value = "key"
       value.value = "value"
 
-      expect(
-        await Promise.all([
-          keyValue.promise,
-          keyValue2.promise,
-          keyValue3.promise,
-        ])
-      ).toEqual([
-        ["key", "value"],
-        ["key2", "value"],
-        ["key", "value3"],
-      ])
+      expect(await output.promise).toEqual(["key", "value"])
+    })
+
+    it("pairs value", async () => {
+      const output = prop<[string, string]>()
+      const key = pairValue("value", output)
+
+      key.value = "key"
+
+      expect(await output.promise).toEqual(["key", "value"])
     })
   })
 

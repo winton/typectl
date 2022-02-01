@@ -467,7 +467,6 @@ export class Prop<T> {
 
     this._state = value
     this._resolve(value)
-
     Object.freeze(this)
   }
 
@@ -484,19 +483,22 @@ export function prop<T>(value?: T): Prop<T> {
   return new Prop(value)
 }
 
-export function pair<K, V>(
-  key: K | Prop<K>,
-  value: V | Prop<V>
-): Prop<[K, V]> {
-  const output = prop<[K, V]>()
-  const k = key instanceof Prop ? key.promise : key
-  const v = value instanceof Prop ? value.promise : value
+export function pairKey<V>(
+  key: RecordKeyType,
+  output: Prop<[RecordKeyType, V]>
+): Prop<V> {
+  const value = prop<V>()
+  value.promise.then((v) => (output.value = [key, v]))
+  return value
+}
 
-  Promise.all([k, v]).then(
-    (result) => (output.value = result)
-  )
-
-  return output
+export function pairValue<V>(
+  value: V,
+  output: Prop<[RecordKeyType, V]>
+): Prop<RecordKeyType> {
+  const key = prop<RecordKeyType>()
+  key.promise.then((k) => (output.value = [k, value]))
+  return key
 }
 
 const wrapFunction = (from: any, to: any) =>
