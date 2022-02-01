@@ -152,8 +152,12 @@ export async function map<
     array: Prop<CO[]>
   },
   callback: IV extends Record<RecordKeyType, I>
-    ? (value: I, key: RecordKeyType) => CO | Promise<CO>
-    : (value: I) => CO | Promise<CO>
+    ? (
+        value: I,
+        key: RecordKeyType,
+        output: Prop<CO>
+      ) => void
+    : (value: I, output: Prop<CO>) => void
 ): Promise<void>
 
 export async function map<
@@ -171,15 +175,10 @@ export async function map<
   callback: IV extends Record<RecordKeyType, I>
     ? (
         value: I,
-        key: RecordKeyType
-      ) =>
-        | [RecordKeyType, CO]
-        | Promise<[RecordKeyType, CO]>
-    : (
-        value: I
-      ) =>
-        | [RecordKeyType, CO]
-        | Promise<[RecordKeyType, CO]>
+        key: RecordKeyType,
+        output: Prop<[RecordKeyType, CO]>
+      ) => void
+    : (value: I, output: Prop<[RecordKeyType, CO]>) => void
 ): Promise<void>
 
 export async function map<
@@ -195,8 +194,12 @@ export async function map<
     stream: Prop<ReadableStream<CO>>
   },
   callback: IV extends Record<RecordKeyType, I>
-    ? (value: I, key: RecordKeyType) => CO | Promise<CO>
-    : (value: I) => CO | Promise<CO>
+    ? (
+        value: I,
+        key: RecordKeyType,
+        output: Prop<CO>
+      ) => void
+    : (value: I, output: Prop<CO>) => void
 ): Promise<void>
 
 export async function map<
@@ -212,8 +215,12 @@ export async function map<
     value: Prop<CO>
   },
   callback: IV extends Record<RecordKeyType, I>
-    ? (value: I, key: RecordKeyType) => CO | Promise<CO>
-    : (value: I) => CO | Promise<CO>
+    ? (
+        value: I,
+        key: RecordKeyType,
+        output: Prop<CO>
+      ) => void
+    : (value: I, output: Prop<CO>) => void
 ): Promise<void>
 
 export async function map<
@@ -233,8 +240,12 @@ export async function map<
   },
   callback?: (
     value: I,
-    key?: RecordKeyType
-  ) => CO | Promise<CO>
+    keyOrOutput:
+      | RecordKeyType
+      | Prop<CO>
+      | Prop<[RecordKeyType, CO]>,
+    output?: Prop<CO> | Prop<[RecordKeyType, CO]>
+  ) => void | Promise<void>
 ): Promise<void> {
   if (options?.array) {
     const finalOutput = []
@@ -242,9 +253,16 @@ export async function map<
     await all(
       iterable,
       { concurrency: options.concurrency },
-      async (value, key) => {
+      async (...args: [any, RecordKeyType]) => {
+        const [value, key] = args
+
         if (callback) {
-          const out = await callback(value, key)
+          const outProp = prop<CO>()
+
+          callback(...args, outProp)
+
+          const out = await outProp.promise
+
           if (!options.compress || out !== undefined) {
             finalOutput.push(out)
           }
@@ -264,13 +282,21 @@ export async function map<
     await all(
       iterable,
       { concurrency: options.concurrency },
-      async (value, key) => {
-        const out = callback
-          ? await callback(value, key)
-          : [key, value]
+      async (...args: [any, RecordKeyType]) => {
+        const [value, key] = args
+        const outProp = prop<[RecordKeyType, CO]>()
+
+        if (callback) {
+          callback(...args, outProp)
+        } else {
+          outProp.value = [key, value]
+        }
+
+        const out = await outProp.promise
 
         if (Array.isArray(out)) {
           const [k, v] = out
+
           if (!options.compress || v !== undefined) {
             finalOutput[k] = v
           }
@@ -285,12 +311,20 @@ export async function map<
     await all(
       iterable,
       { concurrency: options.concurrency },
-      async (value, key) => {
+      async (...args: [any, RecordKeyType]) => {
         if (finalOutput) {
           return
         }
+
+        const [value, key] = args
+
         if (callback) {
-          const out = await callback(value, key)
+          const outProp = prop<CO>()
+
+          callback(...args, outProp)
+
+          const out = await outProp.promise
+
           if (!options.compress || out !== undefined) {
             finalOutput = out
           }
@@ -316,14 +350,26 @@ export async function map<
     all(
       iterable,
       { concurrency: options.concurrency },
-      async (v, k) => {
+      async (...args: [any, RecordKeyType]) => {
+        const [value, key] = args
+
         if (callback) {
-          const out = await callback(v, k)
+          const outProp = prop<CO>()
+
+          callback(...args, outProp)
+
+          const out = await outProp.promise
+
           if (!options.compress || out !== undefined) {
             streamController.enqueue(out)
           }
-        } else if (!options.compress || v !== undefined) {
-          streamController.enqueue(k ? [k, v] : v)
+        } else if (
+          !options.compress ||
+          value !== undefined
+        ) {
+          streamController.enqueue(
+            key ? [key, value] : value
+          )
         }
       }
     ).then(() => streamController.close())

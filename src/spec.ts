@@ -215,7 +215,7 @@ describe("typectl", () => {
       await map(
         ["blah", undefined],
         { compress: true, record: output },
-        (v) => ["hi", v]
+        (v, o) => (o.value = ["hi", v])
       )
 
       expect(output.value).toEqual({ hi: "blah" })
@@ -227,7 +227,7 @@ describe("typectl", () => {
       await map(
         prop(["blah", undefined]),
         { compress: true, record: output },
-        (v) => ["hi", v]
+        (v, o) => (o.value = ["hi", v])
       )
 
       expect(output.value).toEqual({ hi: "blah" })
@@ -251,7 +251,7 @@ describe("typectl", () => {
       await map(
         stream,
         { compress: true, record: output },
-        (v) => [v, v ? true : undefined]
+        (v, o) => (o.value = [v, v ? true : undefined])
       )
 
       expect(output.value).toEqual({ blah: true })
