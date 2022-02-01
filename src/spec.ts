@@ -43,6 +43,10 @@ describe("typectl", () => {
       expect(hello.value).toBe(true)
     })
 
+    it("calls dynamic import with no output", async () => {
+      await call(fakeDynamicImport, { hi: true })
+    })
+
     it("waits for prop args", async () => {
       const hi = prop<boolean>()
       const hello = prop<boolean>()

@@ -48,33 +48,32 @@ export async function call<
   F extends ImportFunctionType,
   I extends InputPropRecordType<ImportInType<F>>,
   O extends OutputPropRecordType<ImportOutType<F>>
->(...input: [F, I, O]) {
-  const [fn, fnInput, fnOutput] = input
-
-  const finalFnInput: Record<string, any> = {}
+>(fn: F, input: I, output?: O) {
+  const finalInput: Record<string, any> = {}
   const promises = []
 
-  for (const key in fnInput) {
+  for (const key in input) {
     if (
-      fnInput[key] instanceof Prop &&
+      input[key] instanceof Prop &&
       !key.endsWith("Prop")
     ) {
       promises.push(
         (async () =>
-          (finalFnInput[key] = await fnInput[key]
-            .promise))()
+          (finalInput[key] = await input[key].promise))()
       )
     } else {
-      finalFnInput[key] = fnInput[key]
+      finalInput[key] = input[key]
     }
   }
 
   await Promise.all(promises)
 
-  const out = (await fn).default(finalFnInput)
+  const out = (await fn).default(finalInput)
 
-  for (const key in fnOutput) {
-    fnOutput[key].value = out[key]
+  if (output) {
+    for (const key in output) {
+      output[key].value = out[key]
+    }
   }
 }
 
