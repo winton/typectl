@@ -68,7 +68,7 @@ export async function call<
 
   await Promise.all(promises)
 
-  const out = (await fn).default(finalInput)
+  const out = await (await fn).default(finalInput)
 
   if (output) {
     for (const key in output) {
