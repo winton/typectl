@@ -68,7 +68,10 @@ describe("typectl", () => {
           { hello: hello2 }
         ),
       ])
-      expect(out).toEqual([undefined, undefined])
+      expect(out).toEqual([
+        { hello: true },
+        { hello: true },
+      ])
       expect(hello.value).toBe(true)
       expect(hello2.value).toBe(true)
     })
@@ -86,7 +89,10 @@ describe("typectl", () => {
             { hello: hello2 }
           ),
       ])
-      expect(out).toEqual([undefined, undefined])
+      expect(out).toEqual([
+        { hello: true },
+        { hello: true },
+      ])
       expect(hello.value).toBe(true)
       expect(hello2.value).toBe(true)
     })

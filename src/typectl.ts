@@ -48,7 +48,7 @@ export async function call<
   F extends ImportFunctionType,
   I extends InputPropRecordType<ImportInType<F>>,
   O extends OutputPropRecordType<ImportOutType<F>>
->(fn: F, input: I, output?: O) {
+>(fn: F, input: I, output?: O): Promise<ImportOutType<F>> {
   const finalInput: Record<string, any> = {}
   const promises = []
 
@@ -75,6 +75,8 @@ export async function call<
       output[key].value = out[key]
     }
   }
+
+  return out
 }
 
 export async function map<
@@ -407,7 +409,7 @@ export async function all<
       : callback
     : undefined
 
-  let input: IV
+  let input = iterable as IV
 
   if (iterable instanceof Prop) {
     input = (await iterable.promise) as IV
