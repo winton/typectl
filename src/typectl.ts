@@ -388,12 +388,18 @@ export async function map<
   }
 }
 
-export async function all(
-  input: IterableType | Prop<IterableType>,
+export async function all<
+  IP extends IterableType | Prop<IterableType>,
+  IV extends PropValueType<IP>,
+  I extends IterableValueType<IV>
+>(
+  iterable: IP,
   options?: {
     concurrency?: number
   },
-  callback?: (value: any, key?: RecordKeyType) => any
+  callback?: IV extends Record<RecordKeyType, I>
+    ? (value: I, key: RecordKeyType) => void | Promise<void>
+    : (value: I) => void | Promise<void>
 ) {
   const cb = callback
     ? options?.concurrency
@@ -401,8 +407,10 @@ export async function all(
       : callback
     : undefined
 
-  if (input instanceof Prop) {
-    input = await input.promise
+  let input: IV
+
+  if (iterable instanceof Prop) {
+    input = (await iterable.promise) as IV
   }
 
   if (input instanceof ReadableStream) {
@@ -416,7 +424,9 @@ export async function all(
             if (done) {
               resolve()
             } else {
-              await (cb ? cb(value) : value)
+              await (cb
+                ? (cb as (value: I) => void)(value)
+                : value)
               return pump()
             }
           })
@@ -424,11 +434,15 @@ export async function all(
       pump()
     })
   } else if (Array.isArray(input)) {
-    return Promise.all(cb ? input.map((v) => cb(v)) : input)
+    return Promise.all(
+      cb
+        ? input.map((v) => (cb as (value: I) => void)(v))
+        : input
+    )
   } else if (typeof input === "object" && input !== null) {
     const promises = []
 
-    for (const key in input) {
+    for (const key in input as Record<string, any>) {
       promises.push(cb ? cb(input[key], key) : input[key])
     }
 
