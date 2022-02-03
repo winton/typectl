@@ -191,7 +191,9 @@ export async function map<
   options: {
     compress?: boolean
     concurrency?: number
+    keepOpen?: boolean
     stream: Prop<ReadableStream<CO>>
+    streamController?: Prop<ReadableStreamController<CO>>
   },
   callback: IV extends Record<RecordKeyType, I>
     ? (
@@ -233,9 +235,11 @@ export async function map<
   options: {
     compress?: boolean
     concurrency?: number
+    keepOpen?: boolean
     array?: Prop<CO[]>
     record?: Prop<Record<RecordKeyType, CO>>
     stream?: Prop<ReadableStream<CO>>
+    streamController?: Prop<ReadableStreamController<CO>>
     value?: Prop<CO>
   },
   callback?: (
@@ -344,6 +348,10 @@ export async function map<
     const finalOutput = new ReadableStream<CO>({
       start(controller) {
         streamController = controller
+
+        if (options.streamController) {
+          options.streamController.value = controller
+        }
       },
     })
 
@@ -372,7 +380,9 @@ export async function map<
           )
         }
       }
-    ).then(() => streamController.close())
+    ).then(
+      () => options.keepOpen || streamController.close()
+    )
 
     options.stream.value = finalOutput
   }
