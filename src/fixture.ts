@@ -1,11 +1,7 @@
-export function fn1() {
-  return "fn1"
+export function time() {
+  return new Date().getTime()
 }
 
-export function fn2() {
-  return "fn2"
-}
-
-export function relay(value: string) {
+export function relay(value: number) {
   return value
 }

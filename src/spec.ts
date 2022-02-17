@@ -65,20 +65,17 @@ describe("typectl", () => {
     expect(await r2).toBe("hello")
   })
 
-  it("everything", async () => {
-    const fn1 = pick(import("./fixture"), "fn1")
-    const fn2 = pick(import("./fixture"), "fn2")
-
-    const allOut = all([fn1, fn2])
-    expect(await pick(allOut, 0)).toBe("fn1")
-    expect(await pick(allOut, 1)).toBe("fn2")
-
-    const eachOut = each([fn1, fn2])
-    expect(await pick(eachOut, 0)).toBe("fn1")
-    expect(await pick(eachOut, 1)).toBe("fn2")
+  it("readme", async () => {
+    const time = pick(import("./fixture"), "time")
+    const times = all([time, time])
+    const time1 = pick(times, 0)
+    const time2 = pick(times, 1)
 
     const relay = wrap(pick(import("./fixture"), "relay"))
-    expect(await relay(pick(allOut, 0))).toBe("fn1")
-    expect(await relay(pick(allOut, 1))).toBe("fn2")
+    const relayedTime1 = relay(time1)
+    const relayedTime2 = relay(time2)
+
+    expect(await relayedTime1).toEqual(await time1)
+    expect(await relayedTime2).toEqual(await time2)
   })
 })
