@@ -18,10 +18,14 @@ export type OptionalPromiseArgsType<T> = {
 }
 
 export type ResolvedIterableType<R> = {
-  -readonly [P in keyof R]: R[P] extends Promise<infer T>
-    ? T
+  -readonly [P in keyof R]: R[P] extends Promise<
+    (...any: any[]) => infer T
+  >
+    ? PromiseInferType<T>
     : R[P] extends (...any: any[]) => infer T
     ? PromiseInferType<T>
+    : R[P] extends Promise<infer T>
+    ? T
     : R[P]
 }
 
@@ -57,9 +61,7 @@ export function all<T extends readonly unknown[] | []>(
   array: T
 ): Promise<ResolvedIterableType<T>> {
   return Promise.all(
-    array.map(async (value: any) =>
-      typeof value === "function" ? value() : value
-    )
+    array.map(promiseCall)
   ) as unknown as Promise<ResolvedIterableType<T>>
 }
 
@@ -69,13 +71,7 @@ export async function each<
   const output = []
 
   for (const value of array) {
-    output.push(
-      value instanceof Promise
-        ? await value
-        : typeof value === "function"
-        ? await value()
-        : value
-    )
+    output.push(await promiseCall(value))
   }
 
   return output as unknown as ResolvedIterableType<T>
@@ -88,4 +84,14 @@ export function pick<
   return Promise.resolve(p).then(
     (v) => (v as any)[k]
   ) as PickedValueType<T, K>
+}
+
+export async function promiseCall(value: any) {
+  value = await value
+
+  if (typeof value === "function") {
+    return value()
+  }
+
+  return value
 }
