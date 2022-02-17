@@ -28,6 +28,13 @@ describe("typectl", () => {
     })
   })
 
+  describe("pick", () => {
+    it("import", async () => {
+      const pickedPick = pick(import("./typectl"), "pick")
+      expect(await pickedPick).toBe(pick)
+    })
+  })
+
   it("each", async () => {
     const r = each([
       Promise.resolve(true),
@@ -56,5 +63,22 @@ describe("typectl", () => {
 
     const r2 = pick(r, 2)
     expect(await r2).toBe("hello")
+  })
+
+  it("everything", async () => {
+    const fn1 = pick(import("./fixture"), "fn1")
+    const fn2 = pick(import("./fixture"), "fn2")
+
+    const allOut = all([fn1, fn2])
+    expect(await pick(allOut, 0)).toBe("fn1")
+    expect(await pick(allOut, 1)).toBe("fn2")
+
+    const eachOut = each([fn1, fn2])
+    expect(await pick(eachOut, 0)).toBe("fn1")
+    expect(await pick(eachOut, 1)).toBe("fn2")
+
+    const relay = wrap(pick(import("./fixture"), "relay"))
+    expect(await relay(pick(allOut, 0))).toBe("fn1")
+    expect(await relay(pick(allOut, 1))).toBe("fn2")
   })
 })
