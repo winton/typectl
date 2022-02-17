@@ -15,7 +15,7 @@ npm install typectl
 
 ## Example
 
-### `functions.ts`
+### `fixture.ts`
 
 ```typescript
 export function time() {
@@ -27,18 +27,19 @@ export function relay(value: number) {
 }
 ```
 
-### `ctlFlow.ts`
+### `spec.ts`
 
 ```typescript
-import { all, pick, each, wrap } from "./typectl"
+import { all, pick, each, wrap } from "typectl"
+import expect from "expect"
 
 export default async function() {
-  const time = pick(import("./functions"), "time")
+  const time = pick(import("./fixture"), "time")
   const times = all([time, time])
   const time1 = pick(times, 0)
   const time2 = pick(times, 1)
 
-  const relay = wrap(pick(import("./functions"), "relay"))
+  const relay = wrap(pick(import("./fixture"), "relay"))
   const relayedTime1 = relay(time1)
   const relayedTime2 = relay(time2)
 
