@@ -22,8 +22,8 @@ Function definitions remain simple and reusable by moving more complex synchroni
 
 Control flows are similar to a "controller", or a place where dependent functions are called to create a final output. Try to keep complex logic out of control flows. Within your control flow:
 
-1. Wrap any function so it accepts the promise version of its arguments (`wrap`).
-2. Pick values from promises without awaiting resolution (`pick`).
+1. Wrap any function so it accepts the promise version of its arguments and returns a promise (`wrap`).
+2. Pick values from promise return values without awaiting resolution (`pick`).
 3. Map promise values to arrays, records, and streams (`toArray`, `toRecord`, `toStream`).
 4. Execute promised functions concurrently (`all`) or sequentially (`each`).
 
