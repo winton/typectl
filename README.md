@@ -24,7 +24,7 @@ Control flows are similar to a "controller", or a place where other functions ar
 
 1. Wrap any function so it accepts the promise version of its arguments and returns a promise (`wrap`).
 2. Pick values from promise return values without awaiting resolution (`pick`).
-3. Map promise values to arrays, records, and streams (`toArray`, `toRecord`, `toStream`).
+3. Map promise values to arrays, records, streams, or anything (`toArray`, `toRecord`, `toStream`, `toValue`).
 4. Execute promised functions concurrently (`all`) or sequentially (`each`).
 
 ### Dev features
