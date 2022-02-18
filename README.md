@@ -8,20 +8,22 @@ npm install typectl
 
 ## Summary
 
-**Typectl** is a control flow library for executing functions and mapping results.
+**Typectl** is a control flow library for executing dependent functions and transforming return values.
 
-Instead of awaiting function calls, typectl wraps functions so they may optionally receive the promise version of their arguments. Wrapped functions do not execute until their arguments resolve.
+Typectl wraps functions so they optionally receive the typed promise version of their arguments. Wrapped functions do not execute until their arguments resolve, and they also always return a typed promise version of the original return value.
 
-With this approach, now you can call all of your functions at once (without await), passing the promise return values to successive calls. The most optimal execution order occurs naturally based on the "race" to run functions pending the resolution of its arguments.
+Call your wrapped functions without await, passing the promise return values to successive wrapped functions. The most optimal execution order occurs naturally based on the "race" to run functions pending the resolution of its arguments. To prepare return values for becoming input, you may "pick" values out of promises or transform them without awaiting their resolution.
+
+The end result? Keep your function definitions simple and reusable. Move more complex synchronicty concerns to control flows. Typectl control flows remain optimized as they scale organically (without much planning).
 
 ### How it works
 
 1. Wrap any function so it accepts the promise version of its arguments (`wrap`).
 2. Pick values from promises without awaiting resolution (`pick`).
-3. Execute promised functions concurrently (`all`) or sequentially (`each`).
-4. Map promises to arrays, records, and streams (`toArray`, `toRecord`, `toStream`).
+3. Map promise values to arrays, records, and streams (`toArray`, `toRecord`, `toStream`).
+4. Execute promised functions concurrently (`all`) or sequentially (`each`).
 
-### Extras
+### Dev features
 
 1. Type-safe ☔.
 2. Elegant dynamic imports ⚡.
