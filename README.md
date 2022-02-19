@@ -8,7 +8,7 @@ npm install typectl
 
 ## Summary
 
-**Typectl** is a control flow library for preparing arguments and executing functions. The API helps define control flows without async/await, effortlessly optimizing execution order without much planning.
+**Typectl** is a control flow library for executing and connecting independent functions. The API is designed to scale: there is no async/await and execution order is automatically optimized.
 
 The "killer feature" of typectl is `wrap`. Wrapping a function allows it to optionally receive the typed promise version of each argument. Wrapped functions do not execute until their arguments resolve and always return a typed promise.
 
