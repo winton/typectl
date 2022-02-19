@@ -18,19 +18,19 @@ The API also provides type-safe ways of transforming promise values without requ
 
 ### How it works
 
-Control flows are similar to a "controller", or a place where other functions are orchestrated. Within your control flow, you may:
+Control flows are similar to a "controller", or a place where other functions are orchestrated. Within your control flow, do all of the following **without await**:
 
 1. Wrap any function so it accepts the promise version of its arguments and returns a promise (`wrap`).
-2. Execute functions independently, concurrently (`all`), or sequentially (`each`) **without await**.
-3. Pick values from promise return values (`pick`) **without await**.
-4. Map promise values to arrays, records, streams, or any value (`toArray`, `toRecord`, `toStream`, `toValue`) **without await**.
+2. Execute functions independently, concurrently (`all`), or sequentially (`each`).
+3. Pick values from promise return values (`pick`).
+4. Map promise values to arrays, records, streams, or any value (`toArray`, `toRecord`, `toStream`, `toValue`).
 
 ### Dev features
 
 1. Type-safe ☔
 2. Dynamic imports ⚡
 3. Universal JS (Node and browser) 👽
-4. Small footprint (~1 kb) 👣
+4. Small footprint (~2 kb compressed) 👣
 
 ## Example
 
