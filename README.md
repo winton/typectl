@@ -18,7 +18,7 @@ The API also provides type-safe ways of transforming promise values without requ
 
 ### How it works
 
-Control flows are similar to a "controller", or a place where other functions are called (potentially to return something). Within your control flow:
+Control flows are similar to a "controller", or a place where other functions are called (potentially to return some final output). Within your control flow, you may:
 
 1. Wrap any function so it accepts the promise version of its arguments and returns a promise (`wrap`).
 2. Pick values from promise return values without awaiting resolution (`pick`).
