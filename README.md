@@ -14,7 +14,7 @@ The "killer feature" of typectl is `wrap`. Wrapping a function allows it to opti
 
 By passing promise return values to successive wrapped functions, the most optimal execution order occurs naturally based on the "race" to execute functions as their arguments resolve.
 
-To prepare function arguments from return values, the API provides type-safe ways of transforming promise values without needing to resolve them.
+The API also provides type-safe ways of transforming promise values without requiring their resolution, which aid in preparing arguments or final return values.
 
 ### How it works
 
