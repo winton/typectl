@@ -21,7 +21,7 @@ The API also provides type-safe ways of transforming promise values without requ
 Control flows are similar to a "controller", or a place where other functions are orchestrated. Within your control flow, you may:
 
 1. Wrap any function so it accepts the promise version of its arguments and returns a promise (`wrap`).
-2. Execute promised functions independently, concurrently (`all`), or sequentially (`each`) **without await**.
+2. Execute functions independently, concurrently (`all`), or sequentially (`each`) **without await**.
 3. Pick values from promise return values (`pick`) **without await**.
 4. Map promise values to arrays, records, streams, or any value (`toArray`, `toRecord`, `toStream`, `toValue`) **without await**.
 
