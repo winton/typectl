@@ -21,8 +21,6 @@
   },
   "homepage": "https://github.com/winton/typectl#readme",
   "dependencies": {
-    "io-type": "1.2.0",
-    "tslib": "2.3.1",
     "web-streams-polyfill": "3.2.0"
   },
   "devDependencies": {

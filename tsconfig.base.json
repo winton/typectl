@@ -4,7 +4,6 @@
     "baseUrl": "./src",
     "declaration": true,
     "esModuleInterop": true,
-    "importHelpers": true,
     "lib": ["dom", "es2015"],
     "moduleResolution": "node",
     "rootDir": "./src",
