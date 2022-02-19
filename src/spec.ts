@@ -1,4 +1,12 @@
-import { all, pick, each, wrap, iterate } from "./typectl"
+import {
+  all,
+  pick,
+  each,
+  wrap,
+  iterate,
+  toArray,
+  toRecord,
+} from "./typectl"
 import expect from "expect"
 
 describe("typectl", () => {
@@ -46,6 +54,29 @@ describe("typectl", () => {
       Promise.resolve((v, i) => out2.push([v, i]))
     )
     expect(out2).toEqual([["hello", 0]])
+  })
+
+  it("toArray", async () => {
+    const out = await toArray([undefined], (v) => v)
+    expect(out).toEqual([undefined])
+
+    const out1 = await toArray(["test"], (v) => v)
+    expect(out1).toEqual(["test"])
+
+    const out2 = await toArray(["test"], (v) => ["hi", v])
+    expect(out2).toEqual(["hi", "test"])
+  })
+
+  it("toRecord", async () => {
+    const out = await toRecord([undefined], (v) => ({
+      [v]: v,
+    }))
+    expect(out).toEqual({ undefined: undefined })
+
+    const out1 = await toRecord(["test"], (v) => ({
+      [v]: v,
+    }))
+    expect(out1).toEqual({ test: "test" })
   })
 
   it("each", async () => {

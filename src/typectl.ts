@@ -117,13 +117,10 @@ export async function iterate<
     ? PromiseOrValueType<(value?: V, index?: number) => any>
     : never
 ) {
-  if (iterable instanceof Promise) {
-    iterable = await iterable
-  }
-
-  if (callback instanceof Promise) {
-    callback = await callback
-  }
+  ;[iterable, callback] = await Promise.all([
+    iterable,
+    callback,
+  ])
 
   if (iterable instanceof ReadableStream) {
     const stream = iterable.getReader()
@@ -163,4 +160,194 @@ export async function iterate<
 
     await Promise.all(promises)
   }
+}
+
+export async function toArray<
+  I extends PromiseOrValueType<IterableType>,
+  C extends I extends PromiseOrValueType<
+    ReadableStream<infer V>
+  >
+    ? PromiseOrValueType<(value?: V) => any>
+    : I extends PromiseOrValueType<
+        Record<RecordKeyType, infer V>
+      >
+    ? PromiseOrValueType<(value?: V, key?: string) => any>
+    : I extends PromiseOrValueType<(infer V)[]>
+    ? PromiseOrValueType<(value?: V, index?: number) => any>
+    : never
+>(
+  iterable: I,
+  callback: C
+): Promise<
+  C extends PromiseOrValueType<
+    (
+      ...any: any[]
+    ) => PromiseOrValueType<(infer V)[] | infer V>
+  >
+    ? V[]
+    : never
+> {
+  const output = []
+
+  ;[iterable, callback] = await Promise.all([
+    iterable,
+    callback,
+  ])
+
+  await iterate(
+    iterable as IterableType,
+    async (...args: any[]) => {
+      const out = await (
+        callback as (...any: any[]) => any
+      )(...args)
+
+      if (Array.isArray(out)) {
+        for (const v of out) {
+          output.push(v)
+        }
+      } else {
+        output.push(out)
+      }
+    }
+  )
+
+  return output as any
+}
+
+export async function toRecord<
+  I extends PromiseOrValueType<IterableType>,
+  C extends I extends PromiseOrValueType<
+    ReadableStream<infer V>
+  >
+    ? PromiseOrValueType<(value?: V) => any>
+    : I extends PromiseOrValueType<
+        Record<RecordKeyType, infer V>
+      >
+    ? PromiseOrValueType<(value?: V, key?: string) => any>
+    : I extends PromiseOrValueType<(infer V)[]>
+    ? PromiseOrValueType<(value?: V, index?: number) => any>
+    : never
+>(
+  iterable: I,
+  callback: C
+): Promise<
+  C extends PromiseOrValueType<
+    (
+      ...any: any[]
+    ) => PromiseOrValueType<Record<RecordKeyType, infer V>>
+  >
+    ? Record<RecordKeyType, V>
+    : never
+> {
+  const output = {}
+
+  ;[iterable, callback] = await Promise.all([
+    iterable,
+    callback,
+  ])
+
+  await iterate(
+    iterable as IterableType,
+    async (...args: any[]) =>
+      Object.assign(
+        output,
+        await (callback as (...any: any[]) => any)(...args)
+      )
+  )
+
+  return output as any
+}
+
+export async function toStream<
+  I extends PromiseOrValueType<IterableType>,
+  C extends I extends PromiseOrValueType<
+    ReadableStream<infer V>
+  >
+    ? PromiseOrValueType<(value?: V) => any>
+    : I extends PromiseOrValueType<
+        Record<RecordKeyType, infer V>
+      >
+    ? PromiseOrValueType<(value?: V, key?: string) => any>
+    : I extends PromiseOrValueType<(infer V)[]>
+    ? PromiseOrValueType<(value?: V, index?: number) => any>
+    : never
+>(
+  iterable: I,
+  callback: C
+): Promise<
+  C extends PromiseOrValueType<
+    (...any: any[]) => PromiseOrValueType<infer V>
+  >
+    ? ReadableStream<V>
+    : never
+> {
+  ;[iterable, callback] = await Promise.all([
+    iterable,
+    callback,
+  ])
+
+  let streamController: ReadableStreamController<any>
+
+  const stream = new ReadableStream<any>({
+    start(controller) {
+      streamController = controller
+    },
+  })
+
+  await iterate(
+    iterable as IterableType,
+    async (...args: any[]) => {
+      streamController.enqueue(
+        await (callback as (...any: any[]) => any)(...args)
+      )
+    }
+  )
+
+  return stream as any
+}
+
+export async function toValue<
+  I extends PromiseOrValueType<IterableType>,
+  C extends I extends PromiseOrValueType<
+    ReadableStream<infer V>
+  >
+    ? PromiseOrValueType<(value?: V) => any>
+    : I extends PromiseOrValueType<
+        Record<RecordKeyType, infer V>
+      >
+    ? PromiseOrValueType<(value?: V, key?: string) => any>
+    : I extends PromiseOrValueType<(infer V)[]>
+    ? PromiseOrValueType<(value?: V, index?: number) => any>
+    : never
+>(
+  iterable: I,
+  callback: C
+): Promise<
+  C extends PromiseOrValueType<
+    (...any: any[]) => PromiseOrValueType<infer V>
+  >
+    ? V
+    : never
+> {
+  ;[iterable, callback] = await Promise.all([
+    iterable,
+    callback,
+  ])
+
+  let value: any
+
+  await iterate(
+    iterable as IterableType,
+    async (...args: any[]) => {
+      const out = await (
+        callback as (...any: any[]) => any
+      )(...args)
+
+      if (out) {
+        value = out
+      }
+    }
+  )
+
+  return value
 }
