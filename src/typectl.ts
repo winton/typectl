@@ -102,10 +102,8 @@ export async function promiseCall(value: any) {
 }
 
 export async function iterate<
-  I extends PromiseOrValueType<IterableType>
->(
-  iterable: I,
-  callback: I extends PromiseOrValueType<
+  I extends PromiseOrValueType<IterableType>,
+  C extends I extends PromiseOrValueType<
     ReadableStream<infer V>
   >
     ? PromiseOrValueType<(value?: V) => any>
@@ -116,7 +114,7 @@ export async function iterate<
     : I extends PromiseOrValueType<(infer V)[]>
     ? PromiseOrValueType<(value?: V, index?: number) => any>
     : never
-) {
+>(iterable: I, callback: C) {
   ;[iterable, callback] = await Promise.all([
     iterable,
     callback,
@@ -129,7 +127,7 @@ export async function iterate<
       const { done, value } = await stream.read()
 
       if (!done) {
-        await (callback as (value?: any) => any)(value)
+        ;(callback as (value?: any) => any)(value)
         return pump()
       }
     }
