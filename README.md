@@ -27,10 +27,10 @@ Control flows are similar to a "controller", or a place where other functions ar
 
 ### Dev features
 
-1. Type-safe ☔.
-2. Dynamic imports ⚡.
-3. Universal JS (Node and browser) 👽.
-4. Small footprint (~1 kb) 👣.
+1. Type-safe ☔
+2. Dynamic imports ⚡
+3. Universal JS (Node and browser) 👽
+4. Small footprint (~1 kb) 👣
 
 ## Example
 
