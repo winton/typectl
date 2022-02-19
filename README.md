@@ -12,9 +12,9 @@ npm install typectl
 
 The "killer feature" of typectl is `wrap`. Wrapping a function allows it to optionally receive the typed promise version of each argument. Wrapped functions do not execute until their arguments resolve and always return a typed promise.
 
-By passing promise return values to successive wrapped functions, the most optimal execution order occurs naturally based on the "race" to execute functions (pending the resolution of their arguments).
+By passing promise return values to successive wrapped functions, the most optimal execution order occurs naturally based on the "race" to execute functions as their arguments resolve.
 
-To prepare the return value of a wrapped function as an argument, the API provides type-safe ways of transforming promise values without needing to resolve them.
+To prepare function arguments from return values, the API provides type-safe ways of transforming promise values without needing to resolve them.
 
 ### How it works
 
