@@ -1,4 +1,13 @@
+import { ReadableStream } from "web-streams-polyfill/ponyfill"
+
 export type RecordKeyType = string | number | symbol
+
+export type IterableType =
+  | ReadableStream<any>
+  | Record<RecordKeyType, any>
+  | any[]
+
+export type PromiseOrValueType<T> = Promise<T> | T
 
 export type PromiseInferType<T> = T extends PromiseLike<
   infer A
@@ -18,11 +27,9 @@ export type OptionalPromiseArgsType<T> = {
 }
 
 export type ResolvedIterableType<R> = {
-  -readonly [P in keyof R]: R[P] extends Promise<
+  -readonly [P in keyof R]: R[P] extends PromiseOrValueType<
     (...any: any[]) => infer T
   >
-    ? PromiseInferType<T>
-    : R[P] extends (...any: any[]) => infer T
     ? PromiseInferType<T>
     : R[P] extends Promise<infer T>
     ? T
@@ -30,14 +37,12 @@ export type ResolvedIterableType<R> = {
 }
 
 export function wrap<
-  I extends
-    | ((...any: any[]) => any)
-    | Promise<(...any: any[]) => any>
+  I extends PromiseOrValueType<(...any: any[]) => any>
 >(
   item: I
-): I extends
-  | ((...any: infer A) => infer T)
-  | Promise<(...any: infer A) => infer T>
+): I extends PromiseOrValueType<
+  (...any: infer A) => infer T
+>
   ? (
       ...any: OptionalPromiseArgsType<A>
     ) => Promise<PromiseInferType<T>>
@@ -94,4 +99,68 @@ export async function promiseCall(value: any) {
   }
 
   return value
+}
+
+export async function iterate<
+  I extends PromiseOrValueType<IterableType>
+>(
+  iterable: I,
+  callback: I extends PromiseOrValueType<
+    ReadableStream<infer V>
+  >
+    ? PromiseOrValueType<(value?: V) => any>
+    : I extends PromiseOrValueType<
+        Record<RecordKeyType, infer V>
+      >
+    ? PromiseOrValueType<(value?: V, key?: string) => any>
+    : I extends PromiseOrValueType<(infer V)[]>
+    ? PromiseOrValueType<(value?: V, index?: number) => any>
+    : never
+) {
+  if (iterable instanceof Promise) {
+    iterable = await iterable
+  }
+
+  if (callback instanceof Promise) {
+    callback = await callback
+  }
+
+  if (iterable instanceof ReadableStream) {
+    const stream = iterable.getReader()
+
+    const pump = async () => {
+      const { done, value } = await stream.read()
+
+      if (!done) {
+        await (callback as (value?: any) => any)(value)
+        return pump()
+      }
+    }
+
+    pump()
+  } else if (Array.isArray(iterable)) {
+    await Promise.all(
+      iterable.map((value, index) =>
+        (callback as (value?: any, index?: number) => any)(
+          value,
+          index
+        )
+      )
+    )
+  } else if (typeof iterable === "object") {
+    const promises = []
+
+    for (const key in iterable) {
+      promises.push(
+        (
+          callback as (
+            value?: any,
+            key?: RecordKeyType
+          ) => any
+        )(iterable[key], key)
+      )
+    }
+
+    await Promise.all(promises)
+  }
 }
