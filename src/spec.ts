@@ -6,6 +6,8 @@ import {
   iterate,
   toArray,
   toRecord,
+  toStream,
+  toValue,
 } from "./typectl"
 import expect from "expect"
 
@@ -77,6 +79,54 @@ describe("typectl", () => {
       [v]: v,
     }))
     expect(out1).toEqual({ test: "test" })
+  })
+
+  it("toStream", async () => {
+    const out = await toStream([undefined], (v) => ({
+      [v]: v,
+    }))
+
+    const reader = out.getReader()
+
+    expect(await reader.read()).toEqual({
+      value: { undefined: undefined },
+      done: false,
+    })
+
+    expect(await reader.read()).toEqual({
+      value: undefined,
+      done: true,
+    })
+
+    const out1 = await toStream(["test"], (v) => ({
+      [v]: v,
+    }))
+
+    const reader1 = out1.getReader()
+
+    expect(await reader1.read()).toEqual({
+      value: { test: "test" },
+      done: false,
+    })
+
+    expect(await reader.read()).toEqual({
+      value: undefined,
+      done: true,
+    })
+  })
+
+  it("toValue", async () => {
+    const out = await toValue([undefined], (v) => v)
+    expect(out).toEqual(undefined)
+
+    const out1 = await toValue(["test"], (v) => v)
+    expect(out1).toEqual("test")
+
+    const out2 = await toValue(
+      ["test", "test2", "test3"],
+      (v, i) => (i > 0 ? v : undefined)
+    )
+    expect(out2).toEqual("test3")
   })
 
   it("each", async () => {

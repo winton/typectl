@@ -278,14 +278,14 @@ export async function toStream<
     },
   })
 
-  await iterate(
+  iterate(
     iterable as IterableType,
     async (...args: any[]) => {
       streamController.enqueue(
         await (callback as (...any: any[]) => any)(...args)
       )
     }
-  )
+  ).then(() => streamController.close())
 
   return stream as any
 }
