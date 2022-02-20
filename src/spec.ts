@@ -163,16 +163,23 @@ describe("typectl", () => {
   })
 
   it("readme", async () => {
-    const time = pick(import("./fixture"), "time")
+    const fixture = import("./fixture")
+    const time = wrap(pick(fixture, "time"))
+    const plusOne = wrap(pick(fixture, "plusOne"))
     const times = all([time, time])
-    const time1 = pick(times, 0)
-    const time2 = pick(times, 1)
+    const timesPlusOne = toArray(times, plusOne)
+    const timesPlusOneRecord = toRecord(
+      timesPlusOne,
+      (v, i) => ({ [i]: v })
+    )
 
-    const relay = wrap(pick(import("./fixture"), "relay"))
-    const relayedTime1 = relay(time1)
-    const relayedTime2 = relay(time2)
+    expect(await timesPlusOneRecord).toEqual({
+      0: expect.any(Number),
+      1: expect.any(Number),
+    })
 
-    expect(await relayedTime1).toEqual(await time1)
-    expect(await relayedTime2).toEqual(await time2)
+    expect(await pick(times, 0)).toEqual(
+      (await pick(timesPlusOneRecord, 0)) - 1
+    )
   })
 })

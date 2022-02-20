@@ -41,30 +41,35 @@ export function time() {
   return new Date().getTime()
 }
 
-export function relay(value: number) {
-  return value
+export function plusOne(value: number) {
+  return value + 1
 }
 ```
 
 ### `spec.ts`
 
 ```typescript
-import { all, pick, wrap } from "typectl"
+import { all, pick, toArray, toRecord, wrap } from "typectl"
 import expect from "expect"
 
 export default async function() {
-  const time = pick(import("./fixture"), "time")
+  const fixture = import("./fixture")
+  const time = wrap(pick(fixture, "time"))
+  const plusOne = wrap(pick(fixture, "plusOne"))
   const times = all([time, time])
-  const time1 = pick(times, 0)
-  const time2 = pick(times, 1)
+  const timesPlusOne = toArray(times, plusOne)
+  const timesPlusOneRecord = toRecord(
+    timesPlusOne,
+    (v, i) => ({ [i]: v })
+  )
 
-  const relay = wrap(pick(import("./fixture"), "relay"))
-  const relayedTime1 = relay(time1)
-  const relayedTime2 = relay(time2)
+  expect(await timesPlusOneRecord).toEqual({
+    0: expect.any(Number),
+    1: expect.any(Number),
+  })
 
-  expect(await relayedTime1).toEqual(await time1)
-  expect(await relayedTime2).toEqual(await time2)
-  
-  // console.log(await time1, await time2)
+  expect(await pick(times, 0)).toEqual(
+    (await pick(timesPlusOneRecord, 0)) - 1
+  )
 }
 ```

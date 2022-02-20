@@ -2,6 +2,6 @@ export function time() {
   return new Date().getTime()
 }
 
-export function relay(value: number) {
-  return value
+export function plusOne(value: number) {
+  return value + 1
 }
