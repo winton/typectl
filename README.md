@@ -23,7 +23,7 @@ Control flows are similar to a "controller", or a place where other functions ar
 1. Wrap any function so it accepts the promise version of its arguments and returns a promise (`wrap`).
 2. Execute functions independently, concurrently (`all`), or sequentially (`each`).
 3. Pick values from promise return values (`pick`).
-4. Map promise values to arrays, records, streams, or any value (`toArray`, `toRecord`, `toStream`, `toValue`).
+4. Map promise values to arrays, records, web streams, or any value (`toArray`, `toRecord`, `toStream`, `toValue`).
 
 ### Dev features
 
@@ -49,7 +49,7 @@ export function relay(value: number) {
 ### `spec.ts`
 
 ```typescript
-import { all, pick, each, wrap } from "typectl"
+import { all, pick, wrap } from "typectl"
 import expect from "expect"
 
 export default async function() {
