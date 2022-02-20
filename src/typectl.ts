@@ -7,13 +7,24 @@ export type IterableType =
 
 export type IterableCallbackType<I> =
   I extends PromiseOrValueType<ReadableStream<infer V>>
-    ? PromiseOrValueType<(value?: V) => any>
+    ? (value?: V) => any
     : I extends PromiseOrValueType<
         Record<RecordKeyType, infer V>
       >
-    ? PromiseOrValueType<(value?: V, key?: string) => any>
+    ? (value?: V, key?: string) => any
     : I extends PromiseOrValueType<(infer V)[]>
-    ? PromiseOrValueType<(value?: V, index?: number) => any>
+    ? (value?: V, index?: number) => any
+    : never
+
+export type MapCallbackType<I, M> =
+  I extends PromiseOrValueType<ReadableStream<infer V>>
+    ? (value?: V) => any
+    : I extends PromiseOrValueType<
+        Record<RecordKeyType, infer V>
+      >
+    ? (value?: V, key?: string, memo?: M) => any
+    : I extends PromiseOrValueType<(infer V)[]>
+    ? (value?: V, index?: number, memo?: M) => any
     : never
 
 export type PromiseOrValueType<T> = Promise<T> | T
@@ -125,7 +136,7 @@ export async function promiseCall<V>(
 
 export async function iterate<
   I extends PromiseOrValueType<IterableType>,
-  C extends IterableCallbackType<I>
+  C extends PromiseOrValueType<IterableCallbackType<I>>
 >(iterable: I, callback: C) {
   ;[iterable, callback] = await Promise.all([
     iterable,
@@ -176,7 +187,7 @@ export async function iterate<
 
 export async function toArray<
   I extends PromiseOrValueType<IterableType>,
-  C extends IterableCallbackType<I>
+  C extends PromiseOrValueType<MapCallbackType<I, any[]>>
 >(
   iterable: I,
   callback: C
@@ -201,7 +212,7 @@ export async function toArray<
     async (...args: any[]) => {
       const out = await (
         callback as (...any: any[]) => any
-      )(...args)
+      )(...args, output)
 
       if (Array.isArray(out)) {
         for (const v of out) {
@@ -218,7 +229,9 @@ export async function toArray<
 
 export async function toRecord<
   I extends PromiseOrValueType<IterableType>,
-  C extends IterableCallbackType<I>
+  C extends PromiseOrValueType<
+    MapCallbackType<I, Record<RecordKeyType, any>>
+  >
 >(
   iterable: I,
   callback: C
@@ -243,7 +256,10 @@ export async function toRecord<
     async (...args: any[]) =>
       Object.assign(
         output,
-        await (callback as (...any: any[]) => any)(...args)
+        await (callback as (...any: any[]) => any)(
+          ...args,
+          output
+        )
       )
   )
 
@@ -252,7 +268,9 @@ export async function toRecord<
 
 export async function toStream<
   I extends PromiseOrValueType<IterableType>,
-  C extends IterableCallbackType<I>
+  C extends PromiseOrValueType<
+    MapCallbackType<I, ReadableStreamController<any>>
+  >
 >(
   iterable: I,
   callback: C
@@ -278,11 +296,14 @@ export async function toStream<
     },
   })
 
-  iterate(
+  stream["promise"] = iterate(
     iterable as IterableType,
     async (...args: any[]) => {
       streamController.enqueue(
-        await (callback as (...any: any[]) => any)(...args)
+        await (callback as (...any: any[]) => any)(
+          ...args,
+          streamController
+        )
       )
     }
   ).then(() => streamController.close())
@@ -292,7 +313,7 @@ export async function toStream<
 
 export async function toValue<
   I extends PromiseOrValueType<IterableType>,
-  C extends IterableCallbackType<I>
+  C extends PromiseOrValueType<MapCallbackType<I, any>>
 >(
   iterable: I,
   callback: C
@@ -315,7 +336,7 @@ export async function toValue<
     async (...args: any[]) => {
       const out = await (
         callback as (...any: any[]) => any
-      )(...args)
+      )(...args, value)
 
       if (out) {
         value = out

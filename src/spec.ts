@@ -65,8 +65,11 @@ describe("typectl", () => {
     const out1 = await toArray(["test"], (v) => v)
     expect(out1).toEqual(["test"])
 
-    const out2 = await toArray(["test"], (v) => ["hi", v])
-    expect(out2).toEqual(["hi", "test"])
+    const out2 = await toArray(["test"], (v) => [v])
+    expect(out2).toEqual(["test"])
+
+    const out3 = await toArray(["test"], (v) => ["hi", v])
+    expect(out3).toEqual(["hi", "test"])
   })
 
   it("toRecord", async () => {
