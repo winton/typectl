@@ -34,7 +34,7 @@ Control flows are similar to a "controller", or a place where other functions ar
 
 ## Example
 
-### `fixture.ts`
+### `functions.ts`
 
 ```typescript
 export function time() {
@@ -46,22 +46,33 @@ export function plusOne(value: number) {
 }
 ```
 
-### `spec.ts`
+### `controlFlow.ts`
 
 ```typescript
 import { all, pick, toArray, toRecord, wrap } from "typectl"
-import expect from "expect"
 
-export default async function() {
-  const fixture = import("./fixture")
-  const time = wrap(pick(fixture, "time"))
-  const plusOne = wrap(pick(fixture, "plusOne"))
+export default function () {
+  const functions = import("./functions")
+  const time = wrap(pick(functions, "time"))
+  const plusOne = wrap(pick(functions, "plusOne"))
   const times = all([time, time])
   const timesPlusOne = toArray(times, plusOne)
   const timesPlusOneRecord = toRecord(
     timesPlusOne,
     (v, i) => ({ [i]: v })
   )
+  return { times, timesPlusOneRecord }
+}
+```
+
+### `spec.ts`
+
+```typescript
+import expect from "expect"
+
+it("runs control flow", async () => {
+  const controlFlow = (await import("./controlFlow")).default
+  const { times, timesPlusOneRecord } = controlFlow()
 
   expect(await timesPlusOneRecord).toEqual({
     0: expect.any(Number),
@@ -71,5 +82,5 @@ export default async function() {
   expect(await pick(times, 0)).toEqual(
     (await pick(timesPlusOneRecord, 0)) - 1
   )
-}
+})
 ```

@@ -162,16 +162,12 @@ describe("typectl", () => {
     expect(await r2).toBe("hello")
   })
 
-  it("readme", async () => {
-    const fixture = import("./fixture")
-    const time = wrap(pick(fixture, "time"))
-    const plusOne = wrap(pick(fixture, "plusOne"))
-    const times = all([time, time])
-    const timesPlusOne = toArray(times, plusOne)
-    const timesPlusOneRecord = toRecord(
-      timesPlusOne,
-      (v, i) => ({ [i]: v })
-    )
+  it("example", async () => {
+    const controlFlow = (
+      await import("./example/controlFlow")
+    ).default
+
+    const { times, timesPlusOneRecord } = controlFlow()
 
     expect(await timesPlusOneRecord).toEqual({
       0: expect.any(Number),
