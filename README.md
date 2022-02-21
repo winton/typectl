@@ -68,6 +68,7 @@ export default function () {
 ### `spec.ts`
 
 ```typescript
+import { pick } from "typectl"
 import expect from "expect"
 import controlFlow from "./controlFlow"
 
