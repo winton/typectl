@@ -10,6 +10,7 @@ import {
   toValue,
 } from "./typectl"
 import expect from "expect"
+import controlFlow from "./example/controlFlow"
 
 describe("typectl", () => {
   describe("wrap", () => {
@@ -163,10 +164,6 @@ describe("typectl", () => {
   })
 
   it("example", async () => {
-    const controlFlow = (
-      await import("./example/controlFlow")
-    ).default
-
     const { times, timesPlusOneRecord } = controlFlow()
 
     expect(await timesPlusOneRecord).toEqual({

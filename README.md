@@ -69,9 +69,9 @@ export default function () {
 
 ```typescript
 import expect from "expect"
+import controlFlow from "./controlFlow"
 
 it("runs control flow", async () => {
-  const controlFlow = (await import("./controlFlow")).default
   const { times, timesPlusOneRecord } = controlFlow()
 
   expect(await timesPlusOneRecord).toEqual({
