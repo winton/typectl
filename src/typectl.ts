@@ -128,8 +128,8 @@ export function pick<
   T extends Promise<any> | any,
   K extends keyof (T extends Promise<infer V> ? V : T)
 >(p: T, k: K): PickedValueType<T, K> {
-  return Promise.resolve(p).then(
-    (v) => (v as any)[k]
+  return Promise.resolve(p).then((v: any) =>
+    typeof v[k] === "function" ? wrap(v[k]) : v[k]
   ) as PickedValueType<T, K>
 }
 

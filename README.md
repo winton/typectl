@@ -21,8 +21,8 @@ The API also provides type-safe ways of transforming promise values without requ
 Control flows are similar to a "controller", or a place where other functions are orchestrated. Within your control flow, do all of the following **without `await`**:
 
 1. Wrap any function so it accepts the promise version of its arguments and returns a promise (`wrap`).
-2. Execute functions independently, concurrently (`all`), or sequentially (`each`).
-3. Pick values from promise return values (`pick`).
+2. Pick values from promises (`pick`). Pick automatically wraps picked function values.
+3. Execute functions independently, concurrently (`all`), or sequentially (`each`).
 4. Map promise values to arrays, records, web streams, or any value (`toArray`, `toRecord`, `toStream`, `toValue`).
 
 ### Dev features
@@ -49,18 +49,15 @@ export function plusOne(value: number) {
 ### `controlFlow.ts`
 
 ```typescript
-import { all, pick, toArray, toRecord, wrap } from "typectl"
+import { all, pick, toArray, toRecord } from "typectl"
 
 export default function () {
   const functions = import("./functions")
-  const time = wrap(pick(functions, "time"))
-  const plusOne = wrap(pick(functions, "plusOne"))
+  const time = pick(functions, "time")
+  const plusOne = pick(functions, "plusOne")
   const times = all([time, time])
   const timesPlusOne = toArray(times, plusOne)
-  const timesPlusOneRecord = toRecord(
-    timesPlusOne,
-    (v, i) => ({ [i]: v })
-  )
+  const timesPlusOneRecord = toRecord(timesPlusOne)
   return { times, timesPlusOneRecord }
 }
 ```
@@ -75,13 +72,13 @@ import controlFlow from "./controlFlow"
 it("runs control flow", async () => {
   const { times, timesPlusOneRecord } = controlFlow()
 
+  expect(await pick(times, 0)).toEqual(
+    (await pick(timesPlusOneRecord, 0)) - 1
+  )
+
   expect(await timesPlusOneRecord).toEqual({
     0: expect.any(Number),
     1: expect.any(Number),
   })
-
-  expect(await pick(times, 0)).toEqual(
-    (await pick(timesPlusOneRecord, 0)) - 1
-  )
 })
 ```
