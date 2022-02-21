@@ -1,4 +1,4 @@
 {
   "enable-source-maps": true,
-  "spec": "dist/cjs-ts/spec.js"
+  "spec": "dist/cjs/spec.js"
 }

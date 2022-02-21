@@ -30,7 +30,7 @@ Control flows are similar to a "controller", or a place where other functions ar
 1. Type-safe ☔
 2. Dynamic imports ⚡
 3. Universal JS (Node and browser) 👽
-4. Small footprint (~3 kb compressed) 👣
+4. Small footprint (~2 kb compressed) 👣
 
 ## Example
 

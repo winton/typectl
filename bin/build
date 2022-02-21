@@ -4,6 +4,7 @@ printf "TypeScript building...\n"
 
 rm -rf dist
 npx tsc --project tsconfig.json &
+npx tsc --project tsconfig.tslib.json &
 time wait
 
 printf "\n"
