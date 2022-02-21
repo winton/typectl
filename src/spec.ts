@@ -63,14 +63,17 @@ describe("typectl", () => {
     const out = await toArray([undefined], (v) => v)
     expect(out).toEqual([undefined])
 
-    const out1 = await toArray(["test"], (v) => v)
+    const out1 = await toArray(["test"])
     expect(out1).toEqual(["test"])
 
-    const out2 = await toArray(["test"], (v) => [v])
+    const out2 = await toArray(["test"], (v) => v)
     expect(out2).toEqual(["test"])
 
-    const out3 = await toArray(["test"], (v) => ["hi", v])
-    expect(out3).toEqual(["hi", "test"])
+    const out3 = await toArray(["test"], (v) => [v])
+    expect(out3).toEqual(["test"])
+
+    const out4 = await toArray(["test"], (v) => ["hi", v])
+    expect(out4).toEqual(["hi", "test"])
   })
 
   it("toRecord", async () => {
@@ -83,6 +86,9 @@ describe("typectl", () => {
       [v]: v,
     }))
     expect(out1).toEqual({ test: "test" })
+
+    const out2 = await toRecord(["test"])
+    expect(out2).toEqual({ 0: "test" })
   })
 
   it("toStream", async () => {
@@ -117,6 +123,32 @@ describe("typectl", () => {
       value: undefined,
       done: true,
     })
+
+    const out2 = await toStream(["test"])
+    const reader2 = out2.getReader()
+
+    expect(await reader2.read()).toEqual({
+      value: [0, "test"],
+      done: false,
+    })
+
+    expect(await reader.read()).toEqual({
+      value: undefined,
+      done: true,
+    })
+
+    const out3 = await toStream({ hi: "test" })
+    const reader3 = out3.getReader()
+
+    expect(await reader3.read()).toEqual({
+      value: ["hi", "test"],
+      done: false,
+    })
+
+    expect(await reader.read()).toEqual({
+      value: undefined,
+      done: true,
+    })
   })
 
   it("toValue", async () => {
@@ -126,11 +158,14 @@ describe("typectl", () => {
     const out1 = await toValue(["test"], (v) => v)
     expect(out1).toEqual("test")
 
-    const out2 = await toValue(
+    const out2 = await toValue(["test1", "test2"])
+    expect(out2).toEqual("test2")
+
+    const out3 = await toValue(
       ["test", "test2", "test3"],
       (v, i) => (i > 0 ? v : undefined)
     )
-    expect(out2).toEqual("test3")
+    expect(out3).toEqual("test3")
   })
 
   it("each", async () => {
