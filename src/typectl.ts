@@ -4,6 +4,7 @@ export type IterableType =
   | ReadableStream<any>
   | Record<RecordKeyType, any>
   | any[]
+  | any
 
 export type IterableValueType<I> =
   I extends PromiseOrValueType<ReadableStream<infer V>>
@@ -196,6 +197,8 @@ export async function iterate<
     }
 
     await Promise.all(promises)
+  } else {
+    await callback(iterable)
   }
 }
 
