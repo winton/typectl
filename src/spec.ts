@@ -10,7 +10,6 @@ import {
   toValue,
 } from "./typectl"
 import expect from "expect"
-import controlFlow from "./example/controlFlow"
 
 describe("typectl", () => {
   describe("wrap", () => {
