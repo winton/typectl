@@ -198,22 +198,4 @@ describe("typectl", () => {
     const r2 = pick(r, 2)
     expect(await r2).toBe("hello")
   })
-
-  it("example", async () => {
-    const { times, timesPlusOneRecord } = controlFlow()
-
-    expect(await times).toEqual([
-      expect.any(Number),
-      expect.any(Number),
-    ])
-
-    expect(await timesPlusOneRecord).toEqual({
-      0: expect.any(Number),
-      1: expect.any(Number),
-    })
-
-    expect(await pick(times, 0)).toEqual(
-      (await pick(timesPlusOneRecord, 0)) - 1
-    )
-  })
 })
