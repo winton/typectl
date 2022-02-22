@@ -39,11 +39,12 @@ describe("typectl", () => {
     })
   })
 
-  describe("pick", () => {
-    it("import", async () => {
-      const pickedPick = pick(import("./typectl"), "pick")
-      expect(await pickedPick).toBe(pick)
-    })
+  it("pick", async () => {
+    const plusOne = await pick(
+      import("./example/functions"),
+      "plusOne"
+    )
+    expect(await plusOne(1)).toBe(2)
   })
 
   it("iterate", async () => {
@@ -200,6 +201,11 @@ describe("typectl", () => {
 
   it("example", async () => {
     const { times, timesPlusOneRecord } = controlFlow()
+
+    expect(await times).toEqual([
+      expect.any(Number),
+      expect.any(Number),
+    ])
 
     expect(await timesPlusOneRecord).toEqual({
       0: expect.any(Number),

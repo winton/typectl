@@ -50,8 +50,8 @@ export type PickedValueType<
   T extends Promise<Record<any, any>> | Record<any, any>,
   K extends RecordKeyType
 > = T extends Promise<any>
-  ? Promise<PromiseInferType<T>[K]>
-  : Promise<T[K]>
+  ? Promise<WrappedFunctionType<PromiseInferType<T>[K]>>
+  : Promise<WrappedFunctionType<T[K]>>
 
 export type OptionalPromiseArgsType<T> = {
   [K in keyof T]: T[K] | Promise<T[K]>
@@ -68,6 +68,17 @@ export type PromiseCallType<T> =
     ? V
     : T
 
+export type WrappedFunctionType<
+  F,
+  D = F
+> = F extends PromiseOrValueType<
+  (...any: infer A) => infer T
+>
+  ? (
+      ...any: OptionalPromiseArgsType<A>
+    ) => Promise<PromiseInferType<T>>
+  : D
+
 export async function getReadableStream() {
   if (typeof ReadableStream === "undefined") {
     return (
@@ -80,15 +91,7 @@ export async function getReadableStream() {
 
 export function wrap<
   I extends PromiseOrValueType<(...any: any[]) => any>
->(
-  item: I
-): I extends PromiseOrValueType<
-  (...any: infer A) => infer T
->
-  ? (
-      ...any: OptionalPromiseArgsType<A>
-    ) => Promise<PromiseInferType<T>>
-  : never {
+>(item: I): WrappedFunctionType<I, never> {
   if (item["_typectl"]) {
     return item as any
   }

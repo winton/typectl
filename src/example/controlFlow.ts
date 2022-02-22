@@ -1,4 +1,4 @@
-import { all, pick, toArray, toRecord } from "typectl"
+import { all, pick, toArray, toRecord } from "../typectl"
 
 export default function () {
   const functions = import("./functions")
@@ -6,9 +6,6 @@ export default function () {
   const plusOne = pick(functions, "plusOne")
   const times = all([time, time])
   const timesPlusOne = toArray(times, plusOne)
-  const timesPlusOneRecord = toRecord(
-    timesPlusOne,
-    (v, i) => ({ [i]: v })
-  )
+  const timesPlusOneRecord = toRecord(timesPlusOne)
   return { times, timesPlusOneRecord }
 }
