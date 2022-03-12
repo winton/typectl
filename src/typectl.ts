@@ -82,9 +82,8 @@ export type WrappedFunctionType<
 
 export async function getReadableStream() {
   if (typeof ReadableStream === "undefined") {
-    return (
-      await import("web-streams-polyfill/ponyfill/es2018")
-    ).ReadableStream
+    return (await import("web-streams-polyfill"))
+      .ReadableStream
   } else {
     return ReadableStream
   }
