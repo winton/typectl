@@ -1,13 +1,17 @@
+import { ReadableStream as ReadableStreamPolyfill } from "web-streams-polyfill"
+
 export type RecordKeyType = string | number | symbol
 
 export type IterableType =
-  | ReadableStream<any>
+  | ReadableStreamPolyfill<any>
   | Record<RecordKeyType, any>
   | any[]
   | any
 
 export type IterableValueType<I> =
-  I extends PromiseOrValueType<ReadableStream<infer V>>
+  I extends PromiseOrValueType<
+    ReadableStreamPolyfill<infer V>
+  >
     ? V
     : I extends PromiseOrValueType<
         Record<RecordKeyType, infer V>
@@ -18,7 +22,9 @@ export type IterableValueType<I> =
     : never
 
 export type IterableCallbackType<I> =
-  I extends PromiseOrValueType<ReadableStream<infer V>>
+  I extends PromiseOrValueType<
+    ReadableStreamPolyfill<infer V>
+  >
     ? (value?: V) => any
     : I extends PromiseOrValueType<
         Record<RecordKeyType, infer V>
@@ -29,7 +35,9 @@ export type IterableCallbackType<I> =
     : never
 
 export type MapCallbackType<I, M> =
-  I extends PromiseOrValueType<ReadableStream<infer V>>
+  I extends PromiseOrValueType<
+    ReadableStreamPolyfill<infer V>
+  >
     ? (value?: V) => any
     : I extends PromiseOrValueType<
         Record<RecordKeyType, infer V>
@@ -80,12 +88,14 @@ export type WrappedFunctionType<
     ) => Promise<PromiseInferType<T>>
   : D
 
-export async function getReadableStream() {
+export async function getReadableStream(): Promise<
+  typeof ReadableStreamPolyfill
+> {
   if (typeof ReadableStream === "undefined") {
     return (await import("web-streams-polyfill"))
       .ReadableStream
   } else {
-    return ReadableStream
+    return ReadableStream as typeof ReadableStreamPolyfill
   }
 }
 
@@ -308,7 +318,7 @@ export async function toStream<
   I extends PromiseOrValueType<IterableType>
 >(
   iterable: I
-): Promise<ReadableStream<IterableValueType<I>>>
+): Promise<ReadableStreamPolyfill<IterableValueType<I>>>
 
 export async function toStream<
   I extends PromiseOrValueType<IterableType>,
@@ -322,7 +332,7 @@ export async function toStream<
   C extends PromiseOrValueType<
     (...any: any[]) => PromiseOrValueType<infer V>
   >
-    ? ReadableStream<V>
+    ? ReadableStreamPolyfill<V>
     : never
 >
 
@@ -337,11 +347,9 @@ export async function toStream<
     callback,
   ])
 
-  const ReadableStream = await getReadableStream()
-
   let streamController: ReadableStreamController<any>
 
-  const stream = new ReadableStream<any>({
+  const stream = new ReadableStreamPolyfill<any>({
     start(controller) {
       streamController = controller
     },
