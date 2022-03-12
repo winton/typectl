@@ -1,3 +1,5 @@
+type ReadableStreamType = typeof ReadableStream
+
 export type RecordKeyType = string | number | symbol
 
 export type IterableType =
@@ -83,7 +85,7 @@ export type WrappedFunctionType<
 export async function getReadableStream() {
   if (typeof ReadableStream === "undefined") {
     return (await import("web-streams-polyfill"))
-      .ReadableStream as typeof ReadableStream
+      .ReadableStream as ReadableStreamType
   } else {
     return ReadableStream
   }
