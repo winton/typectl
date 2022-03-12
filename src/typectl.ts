@@ -83,7 +83,7 @@ export type WrappedFunctionType<
 export async function getReadableStream() {
   if (typeof ReadableStream === "undefined") {
     return (await import("web-streams-polyfill"))
-      .ReadableStream
+      .ReadableStream as typeof ReadableStream
   } else {
     return ReadableStream
   }
