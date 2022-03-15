@@ -133,8 +133,8 @@ export function pick<
   T extends Promise<Record<any, any>> | Record<any, any>,
   K extends keyof (T extends Promise<infer V>
     ? Exclude<V, undefined>
-    : T)
->(p: T, k: K): PickedValueType<T, K> {
+    : Exclude<T, undefined>)
+>(p: T, k: K): PickedValueType<Exclude<T, undefined>, K> {
   return Promise.resolve(p).then((v: any) => {
     if (v === undefined) {
       throw new Error("`pick` received undefined value")
@@ -142,7 +142,7 @@ export function pick<
     return typeof v[k || "default"] === "function"
       ? wrap(v[k])
       : v[k]
-  }) as PickedValueType<T, K>
+  }) as PickedValueType<Exclude<T, undefined>, K>
 }
 
 export async function promiseCall<V>(
