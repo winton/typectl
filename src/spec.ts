@@ -45,6 +45,9 @@ describe("typectl", () => {
     )
     expect(await plusOne(1)).toBe(2)
 
+    const x: string | undefined = "test"
+    await pick(Promise.resolve(x), "indexOf")
+
     try {
       await pick(Promise.resolve(undefined), "blah")
     } catch (e) {

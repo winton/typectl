@@ -131,7 +131,9 @@ export async function each<
 
 export function pick<
   T extends Promise<Record<any, any>> | Record<any, any>,
-  K extends keyof (T extends Promise<infer V> ? V : T)
+  K extends keyof (T extends Promise<infer V>
+    ? Exclude<V, undefined>
+    : T)
 >(p: T, k: K): PickedValueType<T, K> {
   return Promise.resolve(p).then((v: any) => {
     if (v === undefined) {
