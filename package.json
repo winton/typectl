@@ -1,6 +1,6 @@
 {
   "name": "typectl",
-  "version": "2.11.0",
+  "version": "2.11.1",
   "description": "TypeScript control flow library",
   "main": "./dist/cjs/typectl.js",
   "scripts": {
