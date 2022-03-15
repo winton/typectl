@@ -8,6 +8,7 @@ import {
   toRecord,
   toStream,
   toValue,
+  check,
 } from "./typectl"
 import expect from "expect"
 
@@ -44,9 +45,20 @@ describe("typectl", () => {
       "plusOne"
     )
     expect(await plusOne(1)).toBe(2)
+  })
 
-    const x = await pick(Promise.resolve(undefined), "blah")
-    expect(x).toBeUndefined()
+  it("check", async () => {
+    try {
+      await check(Promise.resolve(undefined))
+    } catch (e) {
+      expect(e.message).toBe(
+        "`check` received undefined value"
+      )
+    }
+
+    const x: string | undefined = "test"
+    const y = await check(Promise.resolve(x))
+    expect(y).toBe("test")
   })
 
   it("iterate", async () => {
