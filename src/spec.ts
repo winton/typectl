@@ -44,6 +44,9 @@ describe("typectl", () => {
       "plusOne"
     )
     expect(await plusOne(1)).toBe(2)
+
+    const x = await pick(Promise.resolve(undefined), "blah")
+    expect(x).toBeUndefined()
   })
 
   it("iterate", async () => {
