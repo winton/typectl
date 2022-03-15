@@ -11,6 +11,12 @@ import {
 } from "./typectl"
 import expect from "expect"
 
+class TestClass {
+  blah() {
+    return true
+  }
+}
+
 describe("typectl", () => {
   describe("wrap", () => {
     it("function", async () => {
@@ -45,27 +51,31 @@ describe("typectl", () => {
     )
     expect(await plusOne(1)).toBe(2)
 
-    const x: string | undefined = "test"
-    await pick(Promise.resolve(x), "indexOf")
+    const x: Promise<TestClass | undefined> =
+      Promise.resolve(new TestClass())
+
+    const y = await pick(x, "blah")
+    expect(y).toBeInstanceOf(Function)
 
     try {
       await pick(Promise.resolve(undefined), "blah")
     } catch (e) {
-      expect(e.message).toBe(
+      expect((e as Error).message).toBe(
         "`pick` received undefined value"
       )
     }
   })
 
   it("iterate", async () => {
-    const out = []
+    const out: any[] = []
+
     await iterate(["hello"], (v, i) => out.push([v, i]))
     expect(out).toEqual([["hello", 0]])
 
-    const out2 = []
+    const out2: any[] = []
     await iterate(
       Promise.resolve(["hello"]),
-      Promise.resolve((v, i) => out2.push([v, i]))
+      Promise.resolve((v: any, i: any) => out2.push([v, i]))
     )
     expect(out2).toEqual([["hello", 0]])
   })
@@ -89,12 +99,12 @@ describe("typectl", () => {
 
   it("toRecord", async () => {
     const out = await toRecord([undefined], (v) => ({
-      [v]: v,
+      [v as any]: v,
     }))
     expect(out).toEqual({ undefined: undefined })
 
     const out1 = await toRecord(["test"], (v) => ({
-      [v]: v,
+      [v as any]: v,
     }))
     expect(out1).toEqual({ test: "test" })
 
@@ -104,7 +114,7 @@ describe("typectl", () => {
 
   it("toStream", async () => {
     const out = await toStream([undefined], (v) => ({
-      [v]: v,
+      [v as any]: v,
     }))
 
     const reader = out.getReader()
@@ -120,7 +130,7 @@ describe("typectl", () => {
     })
 
     const out1 = await toStream(["test"], (v) => ({
-      [v]: v,
+      [v as any]: v,
     }))
 
     const reader1 = out1.getReader()
@@ -174,7 +184,7 @@ describe("typectl", () => {
 
     const out3 = await toValue(
       ["test", "test2", "test3"],
-      (v, i) => (i > 0 ? v : undefined)
+      (v, i: any) => (i > 0 ? v : undefined)
     )
     expect(out3).toEqual("test3")
   })

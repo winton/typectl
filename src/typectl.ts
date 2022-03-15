@@ -43,18 +43,19 @@ export type MapCallbackType<I, M> =
 
 export type PromiseOrValueType<T> = Promise<T> | T
 
-export type PromiseInferType<T> = T extends PromiseLike<
-  infer A
+export type PromiseInferType<T> = Exclude<
+  T extends PromiseLike<infer A> ? A : T,
+  undefined
 >
-  ? A
-  : T
 
 export type PickedValueType<
   T extends Promise<Record<any, any>> | Record<any, any>,
   K extends RecordKeyType
 > = T extends Promise<any>
   ? Promise<WrappedFunctionType<PromiseInferType<T>[K]>>
-  : Promise<WrappedFunctionType<T[K]>>
+  : T extends Record<any, any>
+  ? Promise<WrappedFunctionType<T[K]>>
+  : never
 
 export type OptionalPromiseArgsType<T> = {
   [K in keyof T]: T[K] | Promise<T[K]>
@@ -94,17 +95,11 @@ export async function getReadableStream() {
 export function wrap<
   I extends PromiseOrValueType<(...any: any[]) => any>
 >(item: I): WrappedFunctionType<I, never> {
-  if (item["_typectl"]) {
-    return item as any
-  }
-
   const fn = ((...args: any[]) =>
     Promise.all(args).then(async (args) => {
       const fn = (await item) as (...any: any[]) => any
       return fn(...args)
     })) as any
-
-  fn._typectl = true
 
   return fn
 }
@@ -134,7 +129,7 @@ export function pick<
   K extends keyof (T extends Promise<infer V>
     ? Exclude<V, undefined>
     : Exclude<T, undefined>)
->(p: T, k: K): PickedValueType<Exclude<T, undefined>, K> {
+>(p: T, k: K): PickedValueType<T, K> {
   return Promise.resolve(p).then((v: any) => {
     if (v === undefined) {
       throw new Error("`pick` received undefined value")
@@ -171,7 +166,7 @@ export async function iterate<
   if (iterable instanceof ReadableStream) {
     const stream = iterable.getReader()
 
-    const pump = async () => {
+    const pump = async (): Promise<void> => {
       const { done, value } = await stream.read()
 
       if (!done) {
@@ -234,11 +229,11 @@ export async function toArray<
   I extends PromiseOrValueType<IterableType>,
   C extends PromiseOrValueType<MapCallbackType<I, any[]>>
 >(iterable: I, callback?: C) {
-  const output = []
+  const output: any[] = []
 
   ;[iterable, callback] = await Promise.all([
     iterable,
-    callback || (((v) => v) as any),
+    callback || (((v: any) => v) as any),
   ])
 
   await iterate(
@@ -295,7 +290,8 @@ export async function toRecord<
 
   ;[iterable, callback] = await Promise.all([
     iterable,
-    callback || (((v, i) => ({ [i]: v })) as any),
+    callback ||
+      (((v: any, i: RecordKeyType) => ({ [i]: v })) as any),
   ])
 
   await iterate(
@@ -356,7 +352,7 @@ export async function toStream<
     },
   })
 
-  stream["promise"] = iterate(
+  iterate(
     iterable as IterableType,
     async (...args: any[]) => {
       streamController.enqueue(
@@ -399,7 +395,7 @@ export async function toValue<
 >(iterable: I, callback?: C) {
   ;[iterable, callback] = await Promise.all([
     iterable,
-    callback || (((v) => v) as any),
+    callback || (((v: any) => v) as any),
   ])
 
   let value: any

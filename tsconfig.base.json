@@ -8,6 +8,15 @@
     "moduleResolution": "node",
     "rootDir": "./src",
     "sourceMap": true,
-    "types": ["node", "mocha"]
+    "types": ["node", "mocha"],
+    // from gts
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "forceConsistentCasingInFileNames": true,
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "pretty": true,
+    "strict": true
   }
 }
