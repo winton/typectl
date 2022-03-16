@@ -8,6 +8,7 @@ import {
   toRecord,
   toStream,
   toValue,
+  tee,
 } from "./typectl"
 import expect from "expect"
 
@@ -64,6 +65,35 @@ describe("typectl", () => {
         "`pick` received undefined value"
       )
     }
+  })
+
+  it("tee", async () => {
+    const stream = await toStream(["test"])
+    const streams = tee(stream)
+    const stream1 = await pick(streams, 0)
+    const stream2 = await pick(streams, 1)
+    const reader1 = stream1.getReader()
+    const reader2 = stream2.getReader()
+
+    expect(await reader1.read()).toEqual({
+      value: [0, "test"],
+      done: false,
+    })
+
+    expect(await reader1.read()).toEqual({
+      value: undefined,
+      done: true,
+    })
+
+    expect(await reader2.read()).toEqual({
+      value: [0, "test"],
+      done: false,
+    })
+
+    expect(await reader2.read()).toEqual({
+      value: undefined,
+      done: true,
+    })
   })
 
   it("iterate", async () => {

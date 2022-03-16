@@ -137,7 +137,26 @@ export function pick<
     return typeof v[k || "default"] === "function"
       ? wrap(v[k])
       : v[k]
-  }) as PickedValueType<Exclude<T, undefined>, K>
+  }) as PickedValueType<T, K>
+}
+
+export function tee<
+  T extends
+    | ReadableStream<any>
+    | Promise<ReadableStream<any>>
+>(
+  v: T
+): Promise<
+  [
+    ReadableStream<
+      T extends ReadableStream<infer U> ? U : any
+    >,
+    ReadableStream<
+      T extends ReadableStream<infer U> ? U : any
+    >
+  ]
+> {
+  return Promise.resolve(v).then((v) => v.tee())
 }
 
 export async function promiseCall<V>(
