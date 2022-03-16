@@ -113,9 +113,10 @@ export function wrapPick<
 >(item: T, k: K): WrappedFunctionType<V[K], never> {
   const fn = ((...args: any[]) =>
     Promise.all(args).then(async (args) => {
-      const fn = (await item)[k] as unknown as (
-        ...any: any[]
-      ) => any
+      const base = await item
+      const fn = (
+        base[k] as unknown as (...any: any[]) => any
+      ).bind(base)
       return fn(...args)
     })) as any
 
