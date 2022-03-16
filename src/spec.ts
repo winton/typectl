@@ -9,6 +9,7 @@ import {
   toStream,
   toValue,
   tee,
+  wrapPick,
 } from "./typectl"
 import expect from "expect"
 
@@ -43,6 +44,17 @@ describe("typectl", () => {
         await fn("hi", Promise.resolve("hello"))
       ).toEqual(["hi", "hello"])
     })
+  })
+
+  it("wrapPick", async () => {
+    const fn = wrapPick(
+      { x: (x: string, y: Promise<string>) => [x, y] },
+      "x"
+    )
+
+    expect(
+      await fn("hi", Promise.resolve("hello"))
+    ).toEqual(["hi", "hello"])
   })
 
   it("pick", async () => {

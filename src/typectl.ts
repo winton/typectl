@@ -104,6 +104,24 @@ export function wrap<
   return fn
 }
 
+export function wrapPick<
+  T extends Promise<Record<any, any>> | Record<any, any>,
+  V extends T extends Promise<infer V>
+    ? Exclude<V, undefined>
+    : Exclude<T, undefined>,
+  K extends keyof V
+>(item: T, k: K): WrappedFunctionType<V[K], never> {
+  const fn = ((...args: any[]) =>
+    Promise.all(args).then(async (args) => {
+      const fn = (await item)[k] as unknown as (
+        ...any: any[]
+      ) => any
+      return fn(...args)
+    })) as any
+
+  return fn
+}
+
 export function all<T extends readonly unknown[] | []>(
   array: T
 ): Promise<PromiseCallsType<T>> {
