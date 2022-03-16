@@ -114,10 +114,22 @@ export function wrapPick<
   const fn = ((...args: any[]) =>
     Promise.all(args).then(async (args) => {
       const base = await item
-      const fn = (
-        base[k] as unknown as (...any: any[]) => any
-      ).bind(base)
-      return fn(...args)
+
+      if (base === undefined) {
+        throw new Error(
+          "`wrapPick` received undefined value"
+        )
+      }
+
+      const fn = base[k] as unknown as (
+        ...any: any[]
+      ) => any
+
+      if (typeof fn !== "function") {
+        throw new Error("`wrapPick` picked a non-function")
+      }
+
+      return fn.bind(base)(...args)
     })) as any
 
   return fn
