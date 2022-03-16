@@ -162,18 +162,21 @@ export function pick<
 export function tee<
   T extends
     | ReadableStream<any>
-    | Promise<ReadableStream<any>>
+    | Promise<ReadableStream<any>>,
+  V extends T extends Promise<infer V>
+    ? Exclude<V, undefined>
+    : Exclude<T, undefined>
 >(
   v: T
 ): [
   Promise<
     ReadableStream<
-      T extends ReadableStream<infer U> ? U : any
+      V extends ReadableStream<infer U> ? U : any
     >
   >,
   Promise<
     ReadableStream<
-      T extends ReadableStream<infer U> ? U : any
+      V extends ReadableStream<infer U> ? U : any
     >
   >
 ] {
