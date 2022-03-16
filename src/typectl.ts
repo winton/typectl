@@ -135,7 +135,7 @@ export function pick<
       throw new Error("`pick` received undefined value")
     }
     return typeof v[k || "default"] === "function"
-      ? wrap(v[k])
+      ? wrap(v[k].bind(v))
       : v[k]
   }) as PickedValueType<T, K>
 }
