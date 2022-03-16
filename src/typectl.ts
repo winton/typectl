@@ -146,17 +146,22 @@ export function tee<
     | Promise<ReadableStream<any>>
 >(
   v: T
-): Promise<
-  [
-    ReadableStream<
-      T extends ReadableStream<infer U> ? U : any
-    >,
+): [
+  Promise<
     ReadableStream<
       T extends ReadableStream<infer U> ? U : any
     >
-  ]
-> {
-  return Promise.resolve(v).then((v) => v.tee())
+  >,
+  Promise<
+    ReadableStream<
+      T extends ReadableStream<infer U> ? U : any
+    >
+  >
+] {
+  const promise = Promise.resolve(v).then((v) => v.tee())
+  const stream1 = pick(promise, 0)
+  const stream2 = pick(promise, 1)
+  return [stream1, stream2]
 }
 
 export async function promiseCall<V>(

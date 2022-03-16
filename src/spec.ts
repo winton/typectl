@@ -69,11 +69,9 @@ describe("typectl", () => {
 
   it("tee", async () => {
     const stream = await toStream(["test"])
-    const streams = tee(stream)
-    const stream1 = await pick(streams, 0)
-    const stream2 = await pick(streams, 1)
-    const reader1 = stream1.getReader()
-    const reader2 = stream2.getReader()
+    const [stream1, stream2] = tee(stream)
+    const reader1 = (await stream1).getReader()
+    const reader2 = (await stream2).getReader()
 
     expect(await reader1.read()).toEqual({
       value: [0, "test"],
