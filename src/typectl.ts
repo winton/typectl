@@ -21,24 +21,24 @@ export type IterableValueType<I> =
 
 export type IterableCallbackType<I> =
   I extends PromiseOrValueType<ReadableStream<infer V>>
-    ? (value?: V) => any
+    ? (value: V) => any
     : I extends PromiseOrValueType<
         Record<RecordKeyType, infer V>
       >
-    ? (value?: V, key?: RecordKeyType) => any
+    ? (value: V, key: RecordKeyType) => any
     : I extends PromiseOrValueType<(infer V)[]>
-    ? (value?: V, index?: number) => any
+    ? (value: V, index: number) => any
     : never
 
 export type MapCallbackType<I, M> =
   I extends PromiseOrValueType<ReadableStream<infer V>>
-    ? (value?: V) => any
+    ? (value: V) => any
     : I extends PromiseOrValueType<
         Record<RecordKeyType, infer V>
       >
-    ? (value?: V, key?: string, memo?: M) => any
+    ? (value: V, key: string, memo: M) => any
     : I extends PromiseOrValueType<(infer V)[]>
-    ? (value?: V, index?: number, memo?: M) => any
+    ? (value: V, index: number, memo: M) => any
     : never
 
 export type PromiseOrValueType<T> = Promise<T> | T
@@ -258,8 +258,6 @@ export async function iterate<
     }
 
     await Promise.all(promises)
-  } else {
-    await callback(iterable)
   }
 }
 
