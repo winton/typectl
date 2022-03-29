@@ -471,3 +471,23 @@ export async function toValue<
 
   return value
 }
+
+export async function assign<T, U>(
+  target: PromiseOrValueType<T>,
+  source: PromiseOrValueType<U>
+): Promise<T & U>
+
+export async function assign<T, U, V>(
+  target: PromiseOrValueType<T>,
+  source: PromiseOrValueType<U>,
+  source2: PromiseOrValueType<V>
+): Promise<T & U & V>
+
+export async function assign(
+  target: PromiseOrValueType<any>,
+  ...sources: PromiseOrValueType<any>[]
+): Promise<any> {
+  return Object.assign(
+    ...(await Promise.all([target, ...sources]))
+  )
+}

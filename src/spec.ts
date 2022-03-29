@@ -10,6 +10,7 @@ import {
   toValue,
   tee,
   wrapPick,
+  assign,
 } from "./typectl"
 import expect from "expect"
 
@@ -257,5 +258,14 @@ describe("typectl", () => {
 
     const r2 = pick(r, 2)
     expect(await r2).toBe("hello")
+  })
+
+  it("assign", async () => {
+    const r = assign(
+      Promise.resolve({ x: true }),
+      Promise.resolve({ y: true })
+    )
+
+    expect(await r).toEqual({ x: true, y: true })
   })
 })
