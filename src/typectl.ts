@@ -92,14 +92,24 @@ export async function getReadableStream() {
   }
 }
 
+export const wrapCache = new WeakMap()
+
 export function wrap<
   I extends PromiseOrValueType<(...any: any[]) => any>
 >(item: I): WrappedFunctionType<I, never> {
+  const cache = wrapCache.get(item)
+
+  if (cache) {
+    return cache
+  }
+
   const fn = ((...args: any[]) =>
     Promise.all(args).then(async (args) => {
       const fn = (await item) as (...any: any[]) => any
       return fn(...args)
     })) as any
+
+  wrapCache.set(item, fn)
 
   return fn
 }
@@ -111,28 +121,8 @@ export function wrapPick<
     : Exclude<T, undefined>,
   K extends keyof V
 >(item: T, k: K): WrappedFunctionType<V[K], never> {
-  const fn = ((...args: any[]) =>
-    Promise.all(args).then(async (args) => {
-      const base = await item
-
-      if (base === undefined) {
-        throw new Error(
-          "`wrapPick` received undefined value"
-        )
-      }
-
-      const fn = base[k] as unknown as (
-        ...any: any[]
-      ) => any
-
-      if (typeof fn !== "function") {
-        throw new Error("`wrapPick` picked a non-function")
-      }
-
-      return fn.bind(base)(...args)
-    })) as any
-
-  return fn
+  const fn = pick(item, k)
+  return wrap(fn)
 }
 
 export function all<T extends readonly unknown[] | []>(
