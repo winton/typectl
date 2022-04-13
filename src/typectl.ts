@@ -402,15 +402,18 @@ export async function toStream<
     iterable as IterableType,
     async (...args: any[]) => {
       if (callback) {
-        const promise = (
-          callback as (...any: any[]) => any
-        )(...args, streamController)
+        const value = (callback as (...any: any[]) => any)(
+          ...args,
+          streamController
+        )
 
-        return promise.then
-          ? promise.then((value: any) =>
-              streamController.enqueue(value)
-            )
-          : streamController.enqueue(promise)
+        if (value) {
+          return value.then
+            ? value.then((v: any) =>
+                streamController.enqueue(v)
+              )
+            : streamController.enqueue(value)
+        }
       } else {
         streamController.enqueue(
           args[1] !== undefined
