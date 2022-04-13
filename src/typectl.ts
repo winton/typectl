@@ -218,7 +218,7 @@ export async function iterate<
       const { done, value } = await stream.read()
 
       if (!done) {
-        await (callback as (value?: any) => any)(value)
+        ;(callback as (value?: any) => any)(value)
         return pump()
       }
     }
