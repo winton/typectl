@@ -218,7 +218,7 @@ export async function iterate<
       const { done, value } = await stream.read()
 
       if (!done) {
-        ;(callback as (value?: any) => any)(value)
+        await (callback as (value?: any) => any)(value)
         return pump()
       }
     }
@@ -401,16 +401,23 @@ export async function toStream<
   iterate(
     iterable as IterableType,
     async (...args: any[]) => {
-      streamController.enqueue(
-        callback
-          ? await (callback as (...any: any[]) => any)(
-              ...args,
-              streamController
+      if (callback) {
+        const promise = (
+          callback as (...any: any[]) => any
+        )(...args, streamController)
+
+        return promise.then
+          ? promise.then((value: any) =>
+              streamController.enqueue(value)
             )
-          : args[1] !== undefined
-          ? [args[1], args[0]]
-          : args[0]
-      )
+          : streamController.enqueue(promise)
+      } else {
+        streamController.enqueue(
+          args[1] !== undefined
+            ? [args[1], args[0]]
+            : args[0]
+        )
+      }
     }
   ).then(() => streamController.close())
 
