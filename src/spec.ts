@@ -123,7 +123,7 @@ describe("typectl", () => {
 
   it("toArray", async () => {
     const out = await toArray([undefined], (v) => v)
-    expect(out).toEqual([undefined])
+    expect(out).toEqual([])
 
     const out1 = await toArray(["test"])
     expect(out1).toEqual(["test"])

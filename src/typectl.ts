@@ -291,10 +291,14 @@ export async function toArray<
 
       if (Array.isArray(out)) {
         for (const v of out) {
-          output.push(v)
+          if (v !== undefined) {
+            output.push(v)
+          }
         }
       } else {
-        output.push(out)
+        if (out !== undefined) {
+          output.push(out)
+        }
       }
     }
   )
@@ -407,7 +411,7 @@ export async function toStream<
           streamController
         )
 
-        if (value) {
+        if (value !== undefined) {
           return value.then
             ? value.then((v: any) =>
                 streamController.enqueue(v)
