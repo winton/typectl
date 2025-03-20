@@ -114,14 +114,17 @@ export function wrap<
   return fn
 }
 
-export function wrapPick<
+export async function wrapPick<
   T extends Promise<Record<any, any>> | Record<any, any>,
   V extends T extends Promise<infer V>
     ? Exclude<V, undefined>
     : Exclude<T, undefined>,
   K extends keyof V
->(item: T, k: K): WrappedFunctionType<V[K], never> {
-  const fn = pick(item, k)
+>(
+  item: T,
+  k: K
+): Promise<WrappedFunctionType<V[K], never>> {
+  const fn = await pick(item, k)
   return wrap(fn)
 }
 
@@ -147,15 +150,15 @@ export async function each<
 
 export function pick<
   T extends Promise<Record<any, any>> | Record<any, any>,
-  K extends keyof (T extends Promise<infer V>
-    ? Exclude<V, undefined>
-    : Exclude<T, undefined>)
+  K extends keyof (T extends Promise<any>
+    ? PromiseInferType<T>
+    : T)
 >(p: T, k: K): PickedValueType<T, K> {
   return Promise.resolve(p).then((v: any) => {
     if (v === undefined) {
       throw new Error("`pick` received undefined value")
     }
-    return typeof v[k || "default"] === "function"
+    return typeof v[k] === "function"
       ? wrap(v[k].bind(v))
       : v[k]
   }) as PickedValueType<T, K>

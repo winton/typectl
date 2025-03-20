@@ -48,7 +48,7 @@ describe("typectl", () => {
   })
 
   it("wrapPick", async () => {
-    const fn = wrapPick(
+    const fn = await wrapPick(
       { x: (x: string, y: Promise<string>) => [x, y] },
       "x"
     )
