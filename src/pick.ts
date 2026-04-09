@@ -52,7 +52,9 @@ export function wrapPick<
     : Exclude<T, undefined>,
   K extends keyof V,
 >(item: T, k: K): WrappedFunctionType<V[K], never> {
-  return wrap(pick(item, k)) as unknown as WrappedFunctionType<V[K], never>
+  return wrap(
+    pick(item, k)
+  ) as unknown as WrappedFunctionType<V[K], never>
 }
 
 /**
