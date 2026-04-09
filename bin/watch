@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-npx tsc -w --preserveWatchOutput --project tsconfig.json
+npx tsc -w --preserveWatchOutput --project tsconfig.json &
+npx tsc -w --preserveWatchOutput --project tsconfig.esm.json &
+wait

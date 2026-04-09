@@ -71,13 +71,9 @@ describe("typectl", () => {
     const y = await pick(x, "blah")
     expect(y).toBeInstanceOf(Function)
 
-    try {
-      await pick(Promise.resolve(undefined), "blah")
-    } catch (e) {
-      expect((e as Error).message).toBe(
-        "`pick` received undefined value"
-      )
-    }
+    await expect(
+      pick(Promise.resolve(undefined), "blah")
+    ).rejects.toThrow("`pick` received undefined value")
   })
 
   it("tee", async () => {
@@ -385,5 +381,74 @@ describe("typectl", () => {
 
     const version = await pick(obj, "version")
     expect(version).toBe(42)
+  })
+
+  describe("empty iterables", () => {
+    it("toArray on empty array", async () => {
+      expect(await toArray([])).toEqual([])
+    })
+
+    it("toArray on empty record", async () => {
+      expect(await toArray({})).toEqual([])
+    })
+
+    it("toRecord on empty array", async () => {
+      expect(await toRecord([])).toEqual({})
+    })
+
+    it("toRecord on empty record", async () => {
+      expect(await toRecord({})).toEqual({})
+    })
+
+    it("toValue on empty array returns undefined", async () => {
+      expect(await toValue([])).toBeUndefined()
+    })
+
+    it("toStream on empty array closes immediately", async () => {
+      const stream = await toStream([])
+      const reader = stream.getReader()
+      expect(await reader.read()).toEqual({
+        value: undefined,
+        done: true,
+      })
+    })
+
+    it("iterate on empty array", async () => {
+      const out: any[] = []
+      await iterate([], (v) => out.push(v))
+      expect(out).toEqual([])
+    })
+
+    it("iterate on empty record", async () => {
+      const out: any[] = []
+      await iterate({} as Record<string, number>, (v) =>
+        out.push(v)
+      )
+      expect(out).toEqual([])
+    })
+
+    it("iterate on empty ReadableStream", async () => {
+      const stream = new ReadableStream<string>({
+        start(controller) {
+          controller.close()
+        },
+      })
+      const out: string[] = []
+      await iterate(stream, (v) => out.push(v))
+      expect(out).toEqual([])
+    })
+
+    it("wrap with zero-arg function", async () => {
+      const fn = wrap(() => 42)
+      expect(await fn()).toBe(42)
+    })
+
+    it("all on empty array", async () => {
+      expect(await all([])).toEqual([])
+    })
+
+    it("each on empty array", async () => {
+      expect(await each([])).toEqual([])
+    })
   })
 })

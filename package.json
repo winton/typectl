@@ -5,11 +5,19 @@
   "main": "./dist/cjs/typectl.js",
   "module": "./dist/esm/typectl.js",
   "types": "./dist/cjs/typectl.d.ts",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
-      "types": "./dist/cjs/typectl.d.ts",
-      "import": "./dist/esm/typectl.js",
-      "require": "./dist/cjs/typectl.js"
+      "import": {
+        "types": "./dist/esm/typectl.d.ts",
+        "default": "./dist/esm/typectl.js"
+      },
+      "require": {
+        "types": "./dist/cjs/typectl.d.ts",
+        "default": "./dist/cjs/typectl.js"
+      }
     }
   },
   "scripts": {
@@ -52,6 +60,6 @@
   },
   "lint-staged": {
     "*.{css,json,md}": "prettier --write",
-    "*.{js,jsx,ts}": "eslint --fix"
+    "*.{js,ts}": "eslint --fix"
   }
 }
