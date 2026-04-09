@@ -12,8 +12,8 @@ describe("example", () => {
     })
 
     expect(await posts).toEqual([
-      { title: "First post", likes: 3 },
-      { title: "Second post", likes: 7 },
+      { userId: "user-1", title: "First post", likes: 3 },
+      { userId: "user-1", title: "Second post", likes: 7 },
     ])
 
     expect(await profile).toEqual({

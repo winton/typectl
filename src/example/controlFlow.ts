@@ -1,5 +1,9 @@
 import { wrap } from "../typectl"
-import { fetchUser, fetchPosts, formatProfile } from "./functions"
+import {
+  fetchUser,
+  fetchPosts,
+  formatProfile,
+} from "./functions"
 
 const fetchUserW = wrap(fetchUser)
 const fetchPostsW = wrap(fetchPosts)

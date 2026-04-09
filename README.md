@@ -59,14 +59,14 @@ export async function fetchUser(id: string) {
 
 export async function fetchPosts(userId: string) {
   return [
-    { title: "First post", likes: 3 },
-    { title: "Second post", likes: 7 },
+    { userId, title: "First post", likes: 3 },
+    { userId, title: "Second post", likes: 7 },
   ]
 }
 
 export function formatProfile(
   user: { id: string; name: string; email: string },
-  posts: { title: string; likes: number }[]
+  posts: { userId: string; title: string; likes: number }[]
 ) {
   return {
     displayName: user.name,
@@ -120,8 +120,8 @@ describe("example", () => {
     })
 
     expect(await posts).toEqual([
-      { title: "First post", likes: 3 },
-      { title: "Second post", likes: 7 },
+      { userId: "user-1", title: "First post", likes: 3 },
+      { userId: "user-1", title: "Second post", likes: 7 },
     ])
 
     expect(await profile).toEqual({
