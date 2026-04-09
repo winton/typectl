@@ -293,7 +293,10 @@ export async function toValue<
     for (let i = 0; i < (iterable as any[]).length; i++) {
       await apply((iterable as any[])[i], i)
     }
-  } else if (typeof iterable === "object" && iterable !== null) {
+  } else if (
+    typeof iterable === "object" &&
+    iterable !== null
+  ) {
     for (const [key, val] of Object.entries(
       iterable as Record<string, unknown>
     )) {

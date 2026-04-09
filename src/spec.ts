@@ -350,7 +350,9 @@ describe("typectl", () => {
 
   it("iterate skips class instances", async () => {
     const out: any[] = []
-    await iterate(new TestClass() as any, (v: any) => out.push(v))
+    await iterate(new TestClass() as any, (v: any) =>
+      out.push(v)
+    )
     expect(out).toEqual([])
   })
 
@@ -375,7 +377,11 @@ describe("typectl", () => {
     const order: number[] = []
     const out = await toValue(
       [1, 2, 3],
-      async (v: number, _i: number, acc: number | undefined) => {
+      async (
+        v: number,
+        _i: number,
+        acc: number | undefined
+      ) => {
         order.push(v)
         return (acc ?? 0) + v
       }
@@ -388,7 +394,11 @@ describe("typectl", () => {
     const order: string[] = []
     const out = await toValue(
       { a: 1, b: 2, c: 3 } as Record<string, number>,
-      async (v: number, k: any, acc: number | undefined) => {
+      async (
+        v: number,
+        k: any,
+        acc: number | undefined
+      ) => {
         order.push(k)
         return (acc ?? 0) + v
       }
