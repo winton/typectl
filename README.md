@@ -24,27 +24,34 @@ async function getProfile(userId: string) {
 With typectl, you describe **what depends on what** and the runtime figures out the rest:
 
 ```typescript
-import { wrap } from "typectl"
+import { wrapPick } from "typectl"
 
-const fetchUserW = wrap(fetchUser)
-const fetchPostsW = wrap(fetchPosts)
-const formatProfileW = wrap(formatProfile)
+const functions = import("./functions")
+const fetchUser = wrapPick(functions, "fetchUser")
+const fetchPosts = wrapPick(functions, "fetchPosts")
+const formatProfile = wrapPick(functions, "formatProfile")
 
 function getProfile(userId: string) {
-  const user = fetchUserW(userId)
-  const posts = fetchPostsW(userId)            // runs concurrently with fetchUser
-  const profile = formatProfileW(user, posts)  // waits for both, then runs
+  const user = fetchUser(userId)
+  const posts = fetchPosts(userId)            // runs concurrently with fetchUser
+  const profile = formatProfile(user, posts)  // waits for both, then runs
   return profile
 }
 ```
 
-No `async`. No `await`. No `Promise.all`. The function reads like synchronous code, returns a `Promise`, and the library resolves the dependency graph for you.
+No `async`. No `await`. No `Promise.all`. No manual promise wiring. Two properties make this work beautifully:
 
-## Core concept
+**You never `await` until you need a final result.** The entire control flow reads like synchronous code. You only `await` at the boundary where you actually need a resolved value — a test assertion, an HTTP response, a rendered template. Everything before that is just describing relationships between computations.
 
-The key primitive is `wrap`. Wrapping a function makes every argument accept either a plain value **or** a `Promise` of that value. The wrapper resolves all arguments with `Promise.all` before calling the inner function, and always returns a `Promise`.
+**Everything stays fully typed — without writing a single type annotation.** `wrapPick` infers each function's parameter types and return type directly from the dynamic import. In the example above, `user` is typed as `Promise<{ id: string; name: string; email: string }>` and `profile` carries the full return type of `formatProfile` — all without any explicit type declarations in the control flow. The type system follows the data through every step automatically.
 
-By passing promise return values to successive wrapped functions, you build a dependency graph that resolves itself optimally at runtime.
+## Core concepts
+
+**`wrap`** — Wrapping a function makes every argument accept either a plain value **or** a `Promise` of that value. The wrapper resolves all arguments before calling the inner function, and always returns a `Promise`. Since `wrap` also accepts a `Promise<Function>`, it works seamlessly with dynamic imports.
+
+**`wrapPick`** — Combines a dynamic `import()` with property extraction and wrapping in a single step. The result is an immediately callable wrapped function — no `await`, no static imports.
+
+By passing promise return values to successive wrapped functions, you build a dependency graph that resolves itself optimally at runtime. `await` only appears at the final consumption boundary.
 
 ## Example
 
@@ -80,22 +87,22 @@ export function formatProfile(
 ### `controlFlow.ts`
 
 ```typescript
-import { wrap } from "typectl"
-import { fetchUser, fetchPosts, formatProfile } from "./functions"
+import { wrapPick } from "typectl"
 
-const fetchUserW = wrap(fetchUser)
-const fetchPostsW = wrap(fetchPosts)
-const formatProfileW = wrap(formatProfile)
+const functions = import("./functions")
+const fetchUser = wrapPick(functions, "fetchUser")
+const fetchPosts = wrapPick(functions, "fetchPosts")
+const formatProfile = wrapPick(functions, "formatProfile")
 
 export default function getProfile(userId: string) {
-  const user = fetchUserW(userId)
-  const posts = fetchPostsW(userId)
-  const profile = formatProfileW(user, posts)
+  const user = fetchUser(userId)
+  const posts = fetchPosts(userId)
+  const profile = formatProfile(user, posts)
   return { user, posts, profile }
 }
 ```
 
-There is no `await` anywhere in `getProfile`. `fetchUser` and `fetchPosts` run concurrently because neither depends on the other. `formatProfile` automatically waits for both before running. The dependency graph:
+There is no `await` anywhere and no static function imports — each function is dynamically imported and wrapped in a single expression. `fetchUser` and `fetchPosts` run concurrently because neither depends on the other. `formatProfile` automatically waits for both before running. The dependency graph:
 
 ```
 fetchUser ──┐
@@ -147,9 +154,9 @@ import { wrap } from "typectl"
 
 const add = wrap((a: number, b: number) => a + b)
 
-await add(1, 2)                        // → 3
-await add(Promise.resolve(1), 2)       // → 3
-await add(fetch("/a"), fetch("/b"))    // resolves both, then adds
+const three = add(1, 2)                // → Promise<3>
+const six = add(three, 3)              // chains without await → Promise<6>
+add(fetch("/a"), fetch("/b"))          // resolves both, then adds
 ```
 
 Wrapping is memoized — `wrap(fn) === wrap(fn)` — so you can call it freely without creating duplicate wrappers.
@@ -157,10 +164,10 @@ Wrapping is memoized — `wrap(fn) === wrap(fn)` — so you can call it freely w
 `wrap` also accepts a `Promise<Function>`, which is useful with dynamic imports:
 
 ```typescript
-const fn = wrap(
+const add = wrap(
   import("./math").then((m) => m.add)
 )
-await fn(1, 2) // → 3
+add(1, 2) // → Promise<3>
 ```
 
 ### `pick(object, key)`
@@ -170,30 +177,29 @@ Extracts a property from an object or a `Promise` of an object. If the property 
 ```typescript
 import { pick } from "typectl"
 
-// With dynamic imports — no await needed
+// With dynamic imports
 const functions = import("./math")
-const add = pick(functions, "add")     // Promise<wrapped add>
-const result = (await add)(1, 2)       // → 3
+const add = pick(functions, "add")     // → Promise<wrapped add>
 
 // With plain objects
 const config = { port: 3000 }
-await pick(config, "port")             // → 3000
+pick(config, "port")                   // → Promise<3000>
 ```
 
 Throws an `Error` if the resolved object is `undefined`.
 
 ### `wrapPick(object, key)`
 
-Like `pick`, but unconditionally wraps the result with `wrap`. Useful when you need to guarantee a property goes through wrapping even if the type is broad.
+Picks a named property from an object (or `Promise` of one) and wraps it with `wrap`. Because `wrap` accepts a `Promise<Function>`, the returned wrapper is immediately callable — no `await` needed.
 
 ```typescript
 import { wrapPick } from "typectl"
 
-const add = await wrapPick(
-  import("./math"),
-  "add"
-)
-await add(Promise.resolve(1), 2) // → 3
+const functions = import("./math")
+const add = wrapPick(functions, "add")
+const multiply = wrapPick(functions, "multiply")
+
+const result = add(1, multiply(2, 3))  // → Promise<7>, no await needed
 ```
 
 ### `all(array)`
@@ -393,10 +399,11 @@ Like `Object.assign`, but every argument may be a `Promise`. All arguments are r
 ```typescript
 import { assign } from "typectl"
 
-const merged = await assign(
+const merged = assign(
   fetch("/defaults").then((r) => r.json()),
   fetch("/overrides").then((r) => r.json())
 )
+// → Promise<merged object> — pass to other wrapped functions or await at the boundary
 ```
 
 ### `promiseCall(value)`
