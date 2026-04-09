@@ -258,11 +258,9 @@ export async function toValue<
  *
  * Without a callback, the last non-`undefined` element wins.
  *
- * @remarks For arrays the callbacks run **concurrently**, so
- * using an accumulator for stateful reduction may yield
- * non-deterministic results with async callbacks. Use a
- * `ReadableStream` input or {@link toArray} + reduce for
- * ordered accumulation.
+ * All input types are processed **sequentially**, so stateful
+ * accumulation is always deterministic regardless of whether
+ * callbacks are async.
  *
  * @example
  * // Last element of an array
@@ -277,20 +275,34 @@ export async function toValue<
     callback || (((v: any) => v) as any),
   ])
 
+  const cb = callback as (...any: any[]) => any
   let value: any
 
-  await iterate(
-    iterable as IterableType,
-    async (...args: any[]) => {
-      const out = await (
-        callback as (...any: any[]) => any
-      )(...args, value)
-
-      if (out !== undefined) {
-        value = out
-      }
+  const apply = async (...args: any[]) => {
+    const out = await cb(...args, value)
+    if (out !== undefined) {
+      value = out
     }
-  )
+  }
+
+  const ReadableStream = await getReadableStream()
+
+  if (iterable instanceof ReadableStream) {
+    await iterate(iterable as IterableType, apply)
+  } else if (Array.isArray(iterable)) {
+    for (let i = 0; i < (iterable as any[]).length; i++) {
+      await apply((iterable as any[])[i], i)
+    }
+  } else if (
+    typeof iterable === "object" &&
+    iterable !== null
+  ) {
+    for (const [key, val] of Object.entries(
+      iterable as Record<string, unknown>
+    )) {
+      await apply(val, key)
+    }
+  }
 
   return value
 }
