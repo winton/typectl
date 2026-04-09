@@ -244,7 +244,9 @@ Iterates over a `ReadableStream`, array, or plain-object record, invoking `callb
 |-------|-----------|-------------------|
 | `ReadableStream` | Sequential | `(value) => any` |
 | `Array` | Concurrent (`Promise.all`) | `(value, index) => any` |
-| `Record` | Concurrent (`Promise.all`) | `(value, key) => any` |
+| `Record` (plain objects only) | Concurrent (`Promise.all`) | `(value, key) => any` |
+
+> **Note:** Only plain objects (`{}` literals and `Object.create(null)`) are accepted as records. Class instances are not iterated.
 
 ```typescript
 import { iterate } from "typectl"
@@ -359,6 +361,8 @@ The optional `callback` receives `(value, index|key, accumulator)` and should re
 
 Without a callback, the last non-`undefined` element is returned.
 
+All input types are processed **sequentially**, so stateful accumulation is always deterministic regardless of whether callbacks are async.
+
 ```typescript
 import { toValue } from "typectl"
 
@@ -378,8 +382,6 @@ await toValue([1, 5, 3], (v, _i, acc) =>
 )
 // → 5
 ```
-
-> **Note:** For array inputs, callbacks run concurrently. Stateful reduction with async callbacks may yield non-deterministic results. Use a `ReadableStream` input for guaranteed sequential reduction.
 
 ### `tee(stream)`
 

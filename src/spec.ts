@@ -348,6 +348,12 @@ describe("typectl", () => {
     expect(out).toContainEqual(["y", 2])
   })
 
+  it("iterate skips class instances", async () => {
+    const out: any[] = []
+    await iterate(new TestClass() as any, (v: any) => out.push(v))
+    expect(out).toEqual([])
+  })
+
   describe("toValue with falsy results", () => {
     it("reduces to 0", async () => {
       const out = await toValue([1, 2, 3], () => 0)
@@ -363,6 +369,32 @@ describe("typectl", () => {
       const out = await toValue([1], () => false)
       expect(out).toBe(false)
     })
+  })
+
+  it("toValue is sequential and deterministic for arrays", async () => {
+    const order: number[] = []
+    const out = await toValue(
+      [1, 2, 3],
+      async (v: number, _i: number, acc: number | undefined) => {
+        order.push(v)
+        return (acc ?? 0) + v
+      }
+    )
+    expect(order).toEqual([1, 2, 3])
+    expect(out).toBe(6)
+  })
+
+  it("toValue is sequential and deterministic for records", async () => {
+    const order: string[] = []
+    const out = await toValue(
+      { a: 1, b: 2, c: 3 } as Record<string, number>,
+      async (v: number, k: any, acc: number | undefined) => {
+        order.push(k)
+        return (acc ?? 0) + v
+      }
+    )
+    expect(order).toEqual(["a", "b", "c"])
+    expect(out).toBe(6)
   })
 
   it("toStream propagates callback errors", async () => {

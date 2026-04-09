@@ -16,8 +16,10 @@ import { getReadableStream } from "./polyfill"
  * - `Array`: all callbacks are fired **concurrently** via
  *   `Promise.all`. The completion order of async callbacks is
  *   therefore non-deterministic.
- * - `Record`: same concurrent semantics as arrays, iterating
- *   only own enumerable string keys (`Object.entries`).
+ * - `Record` (plain objects only — `Object.create(null)` or
+ *   `{}` literals): same concurrent semantics as arrays,
+ *   iterating own enumerable string keys (`Object.entries`).
+ *   Class instances are not treated as records and are skipped.
  *
  * Both `iterable` and `callback` may themselves be
  * `Promise`-wrapped; they are resolved before iteration
@@ -55,7 +57,12 @@ export async function iterate<
         )
       )
     )
-  } else if (typeof iterable === "object") {
+  } else if (
+    iterable !== null &&
+    typeof iterable === "object" &&
+    (Object.getPrototypeOf(iterable) === Object.prototype ||
+      Object.getPrototypeOf(iterable) === null)
+  ) {
     await Promise.all(
       Object.entries(
         iterable as Record<string, unknown>
