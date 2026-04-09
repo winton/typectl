@@ -1,11 +1,17 @@
-import { all, pick, toArray, toRecord } from "../typectl"
+import { wrap } from "../typectl"
+import {
+  fetchUser,
+  fetchPosts,
+  formatProfile,
+} from "./functions"
 
-export default function () {
-  const functions = import("./functions")
-  const time = pick(functions, "time")
-  const plusOne = pick(functions, "plusOne")
-  const times = all([time, time])
-  const timesPlusOne = toArray(times, plusOne)
-  const timesPlusOneRecord = toRecord(timesPlusOne)
-  return { times, timesPlusOneRecord }
+const fetchUserW = wrap(fetchUser)
+const fetchPostsW = wrap(fetchPosts)
+const formatProfileW = wrap(formatProfile)
+
+export default function getProfile(userId: string) {
+  const user = fetchUserW(userId)
+  const posts = fetchPostsW(userId)
+  const profile = formatProfileW(user, posts)
+  return { user, posts, profile }
 }

@@ -11,36 +11,130 @@ npm install typectl
 Async orchestration code tends to look like this:
 
 ```typescript
-const a = await fetchA()
-const b = await fetchB()           // waits for A, even though it doesn't need to
-const c = await computeC(a, b)
+async function getProfile(userId: string) {
+  const user = await fetchUser(userId)
+  const posts = await fetchPosts(userId)   // waits for user, even though it doesn't need to
+  const profile = formatProfile(user, posts)
+  return profile
+}
 ```
 
-`fetchB` doesn't depend on `fetchA`, yet it waits. You can fix it with `Promise.all`, but as dependencies grow the wiring becomes fragile and hard to read. Typectl eliminates this problem entirely.
+`fetchPosts` doesn't depend on `fetchUser`, yet it waits. You can fix it with `Promise.all`, but as dependencies grow the wiring becomes fragile and hard to read. Typectl eliminates this problem entirely.
 
-With typectl, you describe **what depends on what** and let the runtime figure out the optimal execution order:
+With typectl, you describe **what depends on what** and the runtime figures out the rest:
 
 ```typescript
-import { wrap, all } from "typectl"
+import { wrap } from "typectl"
 
-const fetchAW = wrap(fetchA)
-const fetchBW = wrap(fetchB)
-const computeCW = wrap(computeC)
+const fetchUserW = wrap(fetchUser)
+const fetchPostsW = wrap(fetchPosts)
+const formatProfileW = wrap(formatProfile)
 
-const a = fetchAW()
-const b = fetchBW()                // runs concurrently with A
-const c = computeCW(a, b)          // automatically waits for both A and B
-
-const [resultA, resultB, resultC] = await all([a, b, c])
+function getProfile(userId: string) {
+  const user = fetchUserW(userId)
+  const posts = fetchPostsW(userId)            // runs concurrently with fetchUser
+  const profile = formatProfileW(user, posts)  // waits for both, then runs
+  return profile
+}
 ```
 
-No manual `await` placement. No `Promise.all` juggling. Functions execute as soon as their arguments resolve.
+No `async`. No `await`. No `Promise.all`. The function reads like synchronous code, returns a `Promise`, and the library resolves the dependency graph for you.
 
 ## Core concept
 
 The key primitive is `wrap`. Wrapping a function makes every argument accept either a plain value **or** a `Promise` of that value. The wrapper resolves all arguments with `Promise.all` before calling the inner function, and always returns a `Promise`.
 
 By passing promise return values to successive wrapped functions, you build a dependency graph that resolves itself optimally at runtime.
+
+## Example
+
+This example is located at [`src/example`](src/example).
+
+### `functions.ts`
+
+```typescript
+export async function fetchUser(id: string) {
+  return { id, name: "Alice", email: "alice@example.com" }
+}
+
+export async function fetchPosts(userId: string) {
+  return [
+    { userId, title: "First post", likes: 3 },
+    { userId, title: "Second post", likes: 7 },
+  ]
+}
+
+export function formatProfile(
+  user: { id: string; name: string; email: string },
+  posts: { userId: string; title: string; likes: number }[]
+) {
+  return {
+    displayName: user.name,
+    email: user.email,
+    postCount: posts.length,
+    totalLikes: posts.reduce((sum, p) => sum + p.likes, 0),
+  }
+}
+```
+
+### `controlFlow.ts`
+
+```typescript
+import { wrap } from "typectl"
+import { fetchUser, fetchPosts, formatProfile } from "./functions"
+
+const fetchUserW = wrap(fetchUser)
+const fetchPostsW = wrap(fetchPosts)
+const formatProfileW = wrap(formatProfile)
+
+export default function getProfile(userId: string) {
+  const user = fetchUserW(userId)
+  const posts = fetchPostsW(userId)
+  const profile = formatProfileW(user, posts)
+  return { user, posts, profile }
+}
+```
+
+There is no `await` anywhere in `getProfile`. `fetchUser` and `fetchPosts` run concurrently because neither depends on the other. `formatProfile` automatically waits for both before running. The dependency graph:
+
+```
+fetchUser ──┐
+             ├── formatProfile
+fetchPosts ─┘
+```
+
+### `spec.ts`
+
+```typescript
+import { describe, it, expect } from "vitest"
+import getProfile from "./controlFlow"
+
+describe("example", () => {
+  it("builds a profile without awaits in the control flow", async () => {
+    const { user, posts, profile } = getProfile("user-1")
+
+    expect(await user).toEqual({
+      id: "user-1",
+      name: "Alice",
+      email: "alice@example.com",
+    })
+
+    expect(await posts).toEqual([
+      { userId: "user-1", title: "First post", likes: 3 },
+      { userId: "user-1", title: "Second post", likes: 7 },
+    ])
+
+    expect(await profile).toEqual({
+      displayName: "Alice",
+      email: "alice@example.com",
+      postCount: 2,
+      totalLikes: 10,
+    })
+  })
+})
+```
+
+`await` only appears in the test — at the consumption boundary where you actually need the resolved values.
 
 ## API reference
 
@@ -316,68 +410,6 @@ await promiseCall(42)                    // → 42
 await promiseCall(Promise.resolve(42))   // → 42
 await promiseCall(() => 42)              // → 42
 await promiseCall(async () => 42)        // → 42
-```
-
-## Full example
-
-This example is located at [`src/example`](src/example).
-
-### `functions.ts`
-
-```typescript
-export function time() {
-  return new Date().getTime()
-}
-
-export function plusOne(value: number) {
-  return value + 1
-}
-```
-
-### `controlFlow.ts`
-
-```typescript
-import { all, pick, toArray, toRecord } from "typectl"
-
-export default function () {
-  const functions = import("./functions")
-  const time = pick(functions, "time")
-  const plusOne = pick(functions, "plusOne")
-  const times = all([time, time])
-  const timesPlusOne = toArray(times, plusOne)
-  const timesPlusOneRecord = toRecord(timesPlusOne)
-  return { times, timesPlusOneRecord }
-}
-```
-
-Notice there is no `await` anywhere in the control flow. The dynamic `import()` is a `Promise`, `pick` extracts wrapped functions from it, `all` executes them concurrently, and `toArray`/`toRecord` transform the results — all without blocking.
-
-### `spec.ts`
-
-```typescript
-import { describe, it, expect } from "vitest"
-import { pick } from "typectl"
-import controlFlow from "./controlFlow"
-
-describe("example", () => {
-  it("runs control flow", async () => {
-    const { times, timesPlusOneRecord } = controlFlow()
-
-    expect(await times).toEqual([
-      expect.any(Number),
-      expect.any(Number),
-    ])
-
-    expect(await timesPlusOneRecord).toEqual({
-      0: expect.any(Number),
-      1: expect.any(Number),
-    })
-
-    expect(await pick(times, 0)).toEqual(
-      (await pick(timesPlusOneRecord, 0)) - 1
-    )
-  })
-})
 ```
 
 ## Type exports
