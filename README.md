@@ -39,7 +39,11 @@ function getProfile(userId: string) {
 }
 ```
 
-No `async`. No `await`. No `Promise.all`. No static imports. `wrapPick` extracts each function from the dynamic import and returns an immediately callable wrapper. The library resolves the dependency graph for you.
+No `async`. No `await`. No `Promise.all`. No manual promise wiring. Two properties make this work beautifully:
+
+**You never `await` until you need a final result.** The entire control flow reads like synchronous code. You only `await` at the boundary where you actually need a resolved value — a test assertion, an HTTP response, a rendered template. Everything before that is just describing relationships between computations.
+
+**Everything stays fully typed — without writing a single type annotation.** `wrapPick` infers each function's parameter types and return type directly from the dynamic import. In the example above, `user` is typed as `Promise<{ id: string; name: string; email: string }>` and `profile` carries the full return type of `formatProfile` — all without any explicit type declarations in the control flow. The type system follows the data through every step automatically.
 
 ## Core concepts
 
