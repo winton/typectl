@@ -36,28 +36,23 @@ export function pick<
 
 /**
  * Picks a named property from an object (or `Promise` of one)
- * and unconditionally wraps it with {@link wrap}. Unlike
- * {@link pick}, the returned `Promise` always resolves to a
- * wrapped function — useful when you need to guarantee that a
- * known-function property goes through `wrap` even when the
- * object type is broad.
+ * and wraps it with {@link wrap}. Because `wrap` accepts a
+ * `Promise<Function>`, the returned wrapper is immediately
+ * callable — no `await` needed.
  *
- * @remarks Because this function is `async`, it must be
- * `await`ed or passed as a `Promise` argument to another
- * wrapped function.
+ * @example
+ * const functions = import("./math")
+ * const add = wrapPick(functions, "add")
+ * add(1, 2) // → Promise<3>
  */
-export async function wrapPick<
+export function wrapPick<
   T extends Promise<Record<any, any>> | Record<any, any>,
   V extends T extends Promise<infer V>
     ? Exclude<V, undefined>
     : Exclude<T, undefined>,
   K extends keyof V,
->(
-  item: T,
-  k: K
-): Promise<WrappedFunctionType<V[K], never>> {
-  const fn = await pick(item, k)
-  return wrap(fn)
+>(item: T, k: K): WrappedFunctionType<V[K], never> {
+  return wrap(pick(item, k)) as unknown as WrappedFunctionType<V[K], never>
 }
 
 /**

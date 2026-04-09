@@ -1,17 +1,13 @@
-import { wrap } from "../typectl"
-import {
-  fetchUser,
-  fetchPosts,
-  formatProfile,
-} from "./functions"
+import { wrapPick } from "../typectl"
 
-const fetchUserW = wrap(fetchUser)
-const fetchPostsW = wrap(fetchPosts)
-const formatProfileW = wrap(formatProfile)
+const functions = import("./functions")
+const fetchUser = wrapPick(functions, "fetchUser")
+const fetchPosts = wrapPick(functions, "fetchPosts")
+const formatProfile = wrapPick(functions, "formatProfile")
 
 export default function getProfile(userId: string) {
-  const user = fetchUserW(userId)
-  const posts = fetchPostsW(userId)
-  const profile = formatProfileW(user, posts)
+  const user = fetchUser(userId)
+  const posts = fetchPosts(userId)
+  const profile = formatProfile(user, posts)
   return { user, posts, profile }
 }
