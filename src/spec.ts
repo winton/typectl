@@ -59,11 +59,15 @@ describe("typectl", () => {
   })
 
   it("pick", async () => {
-    const plusOne = await pick(
+    const fetchUser = await pick(
       import("./example/functions"),
-      "plusOne"
+      "fetchUser"
     )
-    expect(await plusOne(1)).toBe(2)
+    expect(await fetchUser("test-1")).toEqual({
+      id: "test-1",
+      name: "Alice",
+      email: "alice@example.com",
+    })
 
     const x: Promise<TestClass | undefined> =
       Promise.resolve(new TestClass())
