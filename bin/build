@@ -4,7 +4,10 @@ printf "TypeScript building...\n"
 
 rm -rf dist
 npx tsc --project tsconfig.json &
-npx tsc --project tsconfig.tslib.json &
+npx tsc --project tsconfig.esm.json &
 time wait
+
+mkdir -p dist/esm
+echo '{"type":"module"}' > dist/esm/package.json
 
 printf "\n"
