@@ -1,5 +1,5 @@
+import { describe, it, expect } from "vitest"
 import { pick } from "../typectl"
-import expect from "expect"
 import controlFlow from "./controlFlow"
 
 describe("example", () => {

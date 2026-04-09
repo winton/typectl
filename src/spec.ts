@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest"
 import {
   all,
   pick,
@@ -12,7 +13,6 @@ import {
   wrapPick,
   assign,
 } from "./typectl"
-import expect from "expect"
 
 class TestClass {
   blah() {
@@ -181,7 +181,7 @@ describe("typectl", () => {
       done: false,
     })
 
-    expect(await reader.read()).toEqual({
+    expect(await reader1.read()).toEqual({
       value: undefined,
       done: true,
     })
@@ -194,7 +194,7 @@ describe("typectl", () => {
       done: false,
     })
 
-    expect(await reader.read()).toEqual({
+    expect(await reader2.read()).toEqual({
       value: undefined,
       done: true,
     })
@@ -207,7 +207,7 @@ describe("typectl", () => {
       done: false,
     })
 
-    expect(await reader.read()).toEqual({
+    expect(await reader3.read()).toEqual({
       value: undefined,
       done: true,
     })
@@ -267,5 +267,123 @@ describe("typectl", () => {
     )
 
     expect(await r).toEqual({ x: true, y: true })
+  })
+
+  it("assign with 3 sources", async () => {
+    const r = assign(
+      Promise.resolve({ a: 1 }),
+      Promise.resolve({ b: 2 }),
+      Promise.resolve({ c: 3 })
+    )
+
+    expect(await r).toEqual({ a: 1, b: 2, c: 3 })
+  })
+
+  describe("wrap error propagation", () => {
+    it("propagates thrown errors", async () => {
+      const fn = wrap(() => {
+        throw new Error("sync error")
+      })
+
+      await expect(fn()).rejects.toThrow("sync error")
+    })
+
+    it("propagates rejected promises", async () => {
+      const fn = wrap(
+        Promise.resolve(() => {
+          throw new Error("from rejected")
+        })
+      )
+
+      await expect(fn()).rejects.toThrow("from rejected")
+    })
+  })
+
+  describe("all/each error handling", () => {
+    it("all rejects when an element rejects", async () => {
+      await expect(
+        all([
+          Promise.resolve(1),
+          Promise.reject(new Error("fail")),
+        ])
+      ).rejects.toThrow("fail")
+    })
+
+    it("each rejects when an element rejects", async () => {
+      await expect(
+        each([
+          Promise.resolve(1),
+          Promise.reject(new Error("fail")),
+        ])
+      ).rejects.toThrow("fail")
+    })
+  })
+
+  it("iterate over ReadableStream", async () => {
+    const stream = new ReadableStream<string>({
+      start(controller) {
+        controller.enqueue("a")
+        controller.enqueue("b")
+        controller.enqueue("c")
+        controller.close()
+      },
+    })
+
+    const out: string[] = []
+    await iterate(stream, (v: string) => {
+      out.push(v)
+    })
+    expect(out).toEqual(["a", "b", "c"])
+  })
+
+  it("iterate over Record", async () => {
+    const out: [any, any][] = []
+    await iterate(
+      { x: 1, y: 2 } as Record<string, number>,
+      (v: number, k: any) => {
+        out.push([k, v])
+      }
+    )
+    expect(out).toContainEqual(["x", 1])
+    expect(out).toContainEqual(["y", 2])
+  })
+
+  describe("toValue with falsy results", () => {
+    it("reduces to 0", async () => {
+      const out = await toValue([1, 2, 3], () => 0)
+      expect(out).toBe(0)
+    })
+
+    it("reduces to empty string", async () => {
+      const out = await toValue(["a", "b"], () => "")
+      expect(out).toBe("")
+    })
+
+    it("reduces to false", async () => {
+      const out = await toValue([1], () => false)
+      expect(out).toBe(false)
+    })
+  })
+
+  it("toStream propagates callback errors", async () => {
+    const stream = await toStream(["a", "b"], () => {
+      throw new Error("stream callback error")
+    })
+
+    const reader = stream.getReader()
+
+    await expect(reader.read()).rejects.toThrow(
+      "stream callback error"
+    )
+  })
+
+  it("pick returns non-function values unwrapped", async () => {
+    const obj = { name: "typectl", version: 42 }
+
+    const name = await pick(obj, "name")
+    expect(name).toBe("typectl")
+
+    const version = await pick(obj, "version")
+    expect(version).toBe(42)
   })
 })

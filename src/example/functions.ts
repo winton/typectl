@@ -2,9 +2,6 @@ export function time() {
   return new Date().getTime()
 }
 
-export function plusOne(value: number | undefined) {
-  if (value === undefined) {
-    throw new Error("value cannot be undefined")
-  }
+export function plusOne(value: number) {
   return value + 1
 }

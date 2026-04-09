@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
     "alwaysStrict": true,
-    "baseUrl": "./src",
     "declaration": true,
     "esModuleInterop": true,
-    "lib": ["dom", "es2015"],
-    "moduleResolution": "node",
+    "lib": ["dom", "es2020"],
+    "moduleResolution": "bundler",
     "rootDir": "./src",
     "sourceMap": true,
-    "types": ["node", "mocha"],
+    "types": ["node"],
     // from gts
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
@@ -17,6 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "pretty": true,
+    "skipLibCheck": true,
     "strict": true
   }
 }
